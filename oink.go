@@ -14,6 +14,7 @@ import (
 	"syscall"
 	"time"
 
+	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/registry"
 )
 
@@ -27,6 +28,9 @@ type Focus struct {
 type endpoint struct {
 	Path  string `json:"path"`
 	Token string `json:"token"`
+	Owner struct {
+		Pid uint32 `json:"pid"`
+	} `json:"owner"`
 }
 
 type buildID struct {
@@ -80,8 +84,12 @@ func hasBuildFile(dir string) bool {
 }
 
 // findOinkInstall 按可靠性从高到低找安装目录：
-// 卸载项的 InstallLocation（安装器写的，跟路径绑定）→ 自启项里的 exe 路径 → 常见路径。
+// 正在运行的后台进程的镜像路径 → 卸载项的 InstallLocation → 自启项里的 exe 路径 → 常见路径。
+// 第一项最准：它是此刻真正在跑的那个 exe，不受"装了几份""从哪启动"影响。
 func findOinkInstall() string {
+	if dir := oinkFromRunning(); dir != "" {
+		return dir
+	}
 	if dir := oinkFromUninstall(); hasBuildFile(dir) {
 		return dir
 	}
@@ -98,6 +106,37 @@ func findOinkInstall() string {
 		}
 	}
 	return ""
+}
+
+// oinkFromRunning 从 ipc.json 里的 pid 反查进程镜像路径。
+func oinkFromRunning() string {
+	ep, err := readEndpoint()
+	if err != nil || ep.Owner.Pid == 0 {
+		return ""
+	}
+	img := processImagePath(ep.Owner.Pid)
+	if img == "" {
+		return ""
+	}
+	dir := filepath.Dir(img)
+	if hasBuildFile(dir) {
+		return dir
+	}
+	return ""
+}
+
+func processImagePath(pid uint32) string {
+	h, err := windows.OpenProcess(windows.PROCESS_QUERY_LIMITED_INFORMATION, false, pid)
+	if err != nil {
+		return ""
+	}
+	defer windows.CloseHandle(h)
+	buf := make([]uint16, 1024)
+	size := uint32(len(buf))
+	if err := windows.QueryFullProcessImageName(h, 0, &buf[0], &size); err != nil {
+		return ""
+	}
+	return windows.UTF16ToString(buf[:size])
 }
 
 func oinkFromUninstall() string {

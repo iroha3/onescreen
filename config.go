@@ -15,7 +15,9 @@ type Config struct {
 	LocalInput int `json:"local_input"`
 	// 另一台机器接的输入源，用户从候选里选一次
 	PeerInput int `json:"peer_input"`
-	// 配合 Oink 的焦点联动
+	// 焦点来源（决定菜单文案和后端实现），目前只有 "oink"
+	FocusSource string `json:"focus_source"`
+	// 跟随焦点自动切屏
 	AutoSwitch bool `json:"auto_switch"`
 	DelayMs    int  `json:"delay_ms"`
 	CooldownMs int  `json:"cooldown_ms"`
@@ -63,10 +65,11 @@ func configPath() string { return filepath.Join(dataDir(), "config.json") }
 
 func defaultConfig() Config {
 	return Config{
-		Monitor:    "0",
-		DelayMs:    400,
-		CooldownMs: 1000,
-		AutoSwitch: true,
+		Monitor:     "0",
+		DelayMs:     400,
+		CooldownMs:  1000,
+		FocusSource: "oink",
+		AutoSwitch:  true,
 	}
 }
 
@@ -96,12 +99,17 @@ func loadConfig(log *logFile) Config {
 	if cfg.Monitor == "" {
 		cfg.Monitor = "0"
 	}
+	if cfg.FocusSource == "" {
+		cfg.FocusSource = "oink"
+	}
 	if cfg.DelayMs <= 0 {
 		cfg.DelayMs = 400
 	}
 	if cfg.CooldownMs < 0 {
 		cfg.CooldownMs = 0
 	}
+	// 把补全后的默认值写回去，配置文件里始终能看到所有字段
+	saveConfig(cfg, log)
 	return cfg
 }
 

@@ -21,8 +21,7 @@ import (
 var iconBytes []byte
 
 const version = "0.1.0"
-
-const repoURL = "https://github.com/"
+const copyright = "© 2026"
 
 const runKey = `Software\Microsoft\Windows\CurrentVersion\Run`
 const runValue = "OneScreen"
@@ -60,14 +59,14 @@ type app struct {
 	cancel context.CancelFunc
 
 	monitor string // 显示器友好名
-	oinkOK  bool
+	oinkDir string // 找到的 Oink 目录，空 = 没装
 
 	mWarn      *systray.MenuItem
 	mSwitch    *systray.MenuItem
 	mAuto      *systray.MenuItem
+	mAutoOn    *systray.MenuItem
 	mDelay     *systray.MenuItem
 	delayItem  map[int]*systray.MenuItem
-	mLocalInfo *systray.MenuItem
 	mPeer      *systray.MenuItem
 	peerItems  map[int]*systray.MenuItem
 	mAutoStart *systray.MenuItem
@@ -93,8 +92,14 @@ func main() {
 		ddcCLI(os.Args[1:])
 		return
 	}
+	if !acquireSingleInstance() {
+		messageBox("OneScreen", "OneScreen 已经在运行了。")
+		return
+	}
+
 	log := newLog(dataDir())
 	a := &app{log: log}
+	currentApp = a
 	a.cfg = loadConfig(log)
 	a.sw = NewSwitcher(a.Config, log, a.onDdcProblem)
 
@@ -104,7 +109,7 @@ func main() {
 	systray.Run(a.onReady, a.onExit)
 }
 
-// prepare 把「这台机器」的事实确定下来：本机口、对端口、Oink 在不在。
+// prepare 把「这台机器」的事实确定下来：本机口、Oink 在不在、显示器叫什么。
 func (a *app) prepare() {
 	cfg := a.Config()
 
@@ -122,22 +127,27 @@ func (a *app) prepare() {
 		a.setConfig(cfg)
 	}
 
-	if cfg.OinkDir == "" {
-		cfg.OinkDir = findOinkInstall()
-		if cfg.OinkDir != "" {
-			cfg.AgentPath = filepath.Join(cfg.OinkDir, "oink-agent.exe")
+	a.oinkDir = cfg.OinkDir
+	if a.oinkDir == "" {
+		a.oinkDir = findOinkInstall()
+		if a.oinkDir != "" {
+			cfg.OinkDir = a.oinkDir
+			cfg.AgentPath = filepath.Join(a.oinkDir, "oink-agent.exe")
 			a.setConfig(cfg)
 		}
 	}
-	a.oinkOK = cfg.OinkDir != ""
-	a.log.Printf("[oink] %s", map[bool]string{true: "找到 " + cfg.OinkDir, false: "没装，只做手动切换"}[a.oinkOK])
-
-	a.monitor = monitorName()
-	if a.monitor != "" {
-		a.log.Printf("[ddc] 显示器 %s", a.monitor)
+	if a.oinkDir != "" {
+		a.log.Printf("[oink] %s", a.oinkDir)
+	} else {
+		a.log.Printf("[oink] 没找到，只做手动切换")
 	}
 
-	// 本机口：只读，自动读一次
+	if name := monitorName(); name != "" {
+		a.monitor = name
+		a.log.Printf("[ddc] 显示器 %s", name)
+	}
+
+	// 本机口：只读，自动读一次。你能点到托盘，说明屏幕正显示这台机器。
 	if cfg.LocalInput == 0 {
 		if cur, _, err := ddcGet(cfg.Monitor, vcpInputSource); err == nil {
 			cfg.LocalInput = int(cur)
@@ -147,15 +157,7 @@ func (a *app) prepare() {
 			a.log.Printf("[ddc] 读不到本机口：%v", err)
 		}
 	}
-
-	// 对端口：从候选里默认取最小的那个
-	if cfg.PeerInput == 0 || cfg.PeerInput == cfg.LocalInput {
-		if cands := a.candidates(); len(cands) > 0 {
-			cfg.PeerInput = cands[0]
-			a.setConfig(cfg)
-			a.log.Printf("[ddc] 对端口默认 = %d（可在托盘里改）", cfg.PeerInput)
-		}
-	}
+	// 对端口不猜：留空，等用户从菜单里选一次。
 }
 
 // candidates 是对端口可选项：显示器支持的输入源里排除本机口。
@@ -174,7 +176,6 @@ func (a *app) candidates() []int {
 			}
 		}
 	}
-	// 从小到大，默认取第一个
 	for i := 0; i < len(out); i++ {
 		for j := i + 1; j < len(out); j++ {
 			if out[j] < out[i] {
@@ -190,30 +191,37 @@ func (a *app) candidates() []int {
 func (a *app) onReady() {
 	systray.SetIcon(iconBytes)
 	systray.SetTooltip("OneScreen")
-	systray.SetOnDClick(func(_ systray.IMenu) {
+	systray.SetOnDClick(func(m systray.IMenu) {
+		if a.Config().PeerInput == 0 {
+			// 还没选过对端口：把菜单弹出来，让双击这个动作直接带到设置项前面
+			go func() {
+				time.Sleep(150 * time.Millisecond)
+				_ = m.ShowMenu()
+			}()
+			return
+		}
 		go a.sw.SwitchToPeer()
 	})
 
-	a.mWarn = systray.AddMenuItem("显示器没有响应 DDC/CI", "")
+	a.mWarn = systray.AddMenuItem(t().warnDdc, "")
 	a.mWarn.Disable()
 	a.mWarn.Hide()
 
-	a.mSwitch = systray.AddMenuItem("切到对端", "双击托盘图标也可以")
+	a.mSwitch = systray.AddMenuItem(t().switchTo, "")
+
+	// 自动切屏：只在 Oink 连上时显示
+	a.mAuto = systray.AddMenuItem(fmt.Sprintf(t().autoFollow, a.focusSourceName()), "")
+	a.mAutoOn = a.mAuto.AddSubMenuItemCheckbox(t().enable, "", a.Config().AutoSwitch)
+	a.mDelay = a.mAuto.AddSubMenuItem(t().delay, "")
+	a.delayItem = map[int]*systray.MenuItem{}
+	for _, ms := range delayChoices {
+		a.delayItem[ms] = a.mDelay.AddSubMenuItem(strconv.Itoa(ms)+" ms", "")
+	}
+	a.mAuto.Hide()
+
 	systray.AddSeparator()
 
-	if a.oinkOK {
-		a.mAuto = systray.AddMenuItemCheckbox("自动切屏", "跟着 Oink 的焦点自动切", a.Config().AutoSwitch)
-		a.mDelay = systray.AddMenuItem("延迟", "")
-		a.delayItem = map[int]*systray.MenuItem{}
-		for _, ms := range delayChoices {
-			a.delayItem[ms] = a.mDelay.AddSubMenuItem(strconv.Itoa(ms)+" ms", "")
-		}
-		systray.AddSeparator()
-	}
-
-	a.mLocalInfo = systray.AddMenuItem("本机口", "自动读取，不需要设置")
-	a.mLocalInfo.Disable()
-	a.mPeer = systray.AddMenuItem("对端口", "另一台机器接的口")
+	a.mPeer = systray.AddMenuItem(t().peerPort, "")
 	a.peerItems = map[int]*systray.MenuItem{}
 	for _, v := range a.candidates() {
 		v := v
@@ -223,9 +231,9 @@ func (a *app) onReady() {
 	}
 
 	systray.AddSeparator()
-	a.mAutoStart = systray.AddMenuItemCheckbox("开机自启", "", isAutostartEnabled())
-	mAbout := systray.AddMenuItem("关于 OneScreen", "")
-	mQuit := systray.AddMenuItem("退出", "")
+	a.mAutoStart = systray.AddMenuItemCheckbox(t().autostart, "", isAutostartEnabled())
+	mAbout := systray.AddMenuItem(t().about, "")
+	mQuit := systray.AddMenuItem(t().quit, "")
 
 	a.refreshLabels()
 
@@ -240,18 +248,22 @@ func (a *app) onReady() {
 				systray.SetTooltip("OneScreen · " + a.sw.StatusText())
 			},
 			func() {
+				a.setOinkOnline(true)
 				a.sw.Resync()
 				systray.SetTooltip("OneScreen · " + a.sw.StatusText())
 			},
 			func(msg string) {
 				if msg == "" {
+					a.setOinkOnline(true)
 					return
 				}
+				a.setOinkOnline(false)
 				a.log.Printf("[oink] %s", msg)
 			})
 	}()
 
-	a.mSwitch.Click(func() { go a.sw.SwitchToPeer() })
+	a.mSwitch.Click(func() { a.sw.SwitchToPeer() })
+	a.mAutoOn.Click(func() { a.toggleAuto() })
 	a.mAutoStart.Click(func() { a.toggleAutostart() })
 	mAbout.Click(showAbout)
 	mQuit.Click(func() {
@@ -259,20 +271,84 @@ func (a *app) onReady() {
 		systray.Quit()
 	})
 
-	if a.mAuto != nil {
-		a.mAuto.Click(func() { a.toggleAuto() })
+	for ms, item := range a.delayItem {
+		ms, item := ms, item
+		item.Click(func() { a.setDelay(ms, item) })
+	}
+}
+
+func (a *app) focusSourceName() string {
+	switch a.Config().FocusSource {
+	case "", "oink":
+		return "Oink"
+	default:
+		return a.Config().FocusSource
+	}
+}
+
+// setOinkOnline 控制自动切屏那一组显不显示。没连上就没有这一组。
+func (a *app) setOinkOnline(online bool) {
+	if a.mAuto == nil {
+		return
+	}
+	if online {
+		a.mAuto.Show()
+	} else {
+		a.mAuto.Hide()
+	}
+}
+
+func (a *app) onExit() {
+	if a.cancel != nil {
+		a.cancel()
+	}
+	a.log.Printf("已退出")
+}
+
+// ---------------------------------------------------------------- 菜单状态
+
+func (a *app) refreshLabels() {
+	cfg := a.Config()
+	if a.mSwitch != nil {
+		if cfg.PeerInput > 0 {
+			a.mSwitch.SetTitle(fmt.Sprintf("%s (%d)", t().switchTo, cfg.PeerInput))
+		} else {
+			a.mSwitch.SetTitle(t().switchTo)
+		}
+	}
+	if a.mPeer != nil {
+		a.mPeer.SetTitle(t().peerPort)
+		for v, item := range a.peerItems {
+			if v == cfg.PeerInput {
+				item.Check()
+			} else {
+				item.Uncheck()
+			}
+		}
 	}
 	if a.mDelay != nil {
+		a.mDelay.SetTitle(fmt.Sprintf("%s %dms", t().delay, cfg.DelayMs))
 		for ms, item := range a.delayItem {
-			ms, item := ms, item
-			item.Click(func() { a.setDelay(ms, item) })
+			if ms == cfg.DelayMs {
+				item.Check()
+			} else {
+				item.Uncheck()
+			}
 		}
 	}
 }
 
+func (a *app) setPeer(v int) {
+	c := a.Config()
+	c.PeerInput = v
+	a.setConfig(c)
+	a.refreshLabels()
+	a.log.Printf("[config] 对端口 = %d", v)
+}
+
 func (a *app) toggleAuto() {
 	c := a.Config()
-	c.AutoSwitch = a.mAuto.Checked()
+	c.AutoSwitch = a.mAutoOn.Checked()
 	a.setConfig(c)
 	a.sw.SetPaused(!c.AutoSwitch)
 }
@@ -285,7 +361,7 @@ func (a *app) setDelay(ms int, item *systray.MenuItem) {
 		it.Uncheck()
 	}
 	item.Check()
-	a.mDelay.SetTitle(fmt.Sprintf("延迟 %dms", ms))
+	a.mDelay.SetTitle(fmt.Sprintf("%s %dms", t().delay, ms))
 	a.log.Printf("[config] 延迟 = %dms", ms)
 }
 
@@ -303,61 +379,6 @@ func (a *app) toggleAutostart() {
 	c := a.Config()
 	c.Autostart = enable
 	a.setConfig(c)
-}
-
-func (a *app) onExit() {
-	if a.cancel != nil {
-		a.cancel()
-	}
-	a.log.Printf("已退出")
-}
-
-// ---------------------------------------------------------------- 菜单状态
-
-func (a *app) refreshLabels() {
-	cfg := a.Config()
-	if a.mSwitch != nil {
-		if cfg.PeerInput > 0 {
-			a.mSwitch.SetTitle(fmt.Sprintf("切到对端 (%d)", cfg.PeerInput))
-		} else {
-			a.mSwitch.SetTitle("切到对端")
-		}
-	}
-	if a.mLocalInfo != nil {
-		name := a.monitor
-		if name == "" {
-			name = "显示器"
-		}
-		a.mLocalInfo.SetTitle(fmt.Sprintf("本机口 %d · %s", cfg.LocalInput, name))
-	}
-	if a.mPeer != nil {
-		a.mPeer.SetTitle(fmt.Sprintf("对端口 = %d", cfg.PeerInput))
-		for v, item := range a.peerItems {
-			if v == cfg.PeerInput {
-				item.Check()
-			} else {
-				item.Uncheck()
-			}
-		}
-	}
-	if a.mDelay != nil {
-		a.mDelay.SetTitle(fmt.Sprintf("延迟 %dms", cfg.DelayMs))
-		for ms, item := range a.delayItem {
-			if ms == cfg.DelayMs {
-				item.Check()
-			} else {
-				item.Uncheck()
-			}
-		}
-	}
-}
-
-func (a *app) setPeer(v int) {
-	c := a.Config()
-	c.PeerInput = v
-	a.setConfig(c)
-	a.refreshLabels()
-	a.log.Printf("[config] 对端口 = %d", v)
 }
 
 // onDdcProblem 显示器不响应时把警告行亮出来，正常了再藏起来。
@@ -410,17 +431,39 @@ func sameInts(a, b []int) bool {
 	return true
 }
 
-// ---------------------------------------------------------------- 杂项
+// ---------------------------------------------------------------- 关于
+
+var currentApp *app
 
 func showAbout() {
-	title := syscall.StringToUTF16Ptr("关于 OneScreen")
-	text := syscall.StringToUTF16Ptr(fmt.Sprintf(
-		"OneScreen %s\n\n单显示器多设备切换。\n\n配置文件：%s\n日志：%s\n\n%s",
-		version, configPath(), filepath.Join(dataDir(), "switch.log"), repoURL))
-	const mbOK = 0x0
-	const mbIconInfo = 0x40
-	procMessageBox.Call(0, uintptr(unsafe.Pointer(text)), uintptr(unsafe.Pointer(title)), mbOK|mbIconInfo)
+	a := currentApp
+	cfg := a.Config()
+	monitor := a.monitor
+	if monitor == "" {
+		monitor = "?"
+	}
+	body := fmt.Sprintf(
+		"OneScreen %s\n%s\n\n%s %d · %s\n%s\n%s\n\n%s",
+		version, t().aboutSub,
+		t().localPort, cfg.LocalInput, monitor,
+		configPath(),
+		filepath.Join(dataDir(), "switch.log"),
+		copyright,
+	)
+	messageBox(t().aboutTitle, body)
 }
+
+func messageBox(title, body string) {
+	pt, err1 := syscall.UTF16PtrFromString(title)
+	pb, err2 := syscall.UTF16PtrFromString(body)
+	if err1 != nil || err2 != nil {
+		return
+	}
+	const mbOK = 0x0
+	procMessageBox.Call(0, uintptr(unsafe.Pointer(pb)), uintptr(unsafe.Pointer(pt)), mbOK)
+}
+
+// ---------------------------------------------------------------- 开机自启
 
 func isAutostartEnabled() bool {
 	k, err := registry.OpenKey(registry.CURRENT_USER, runKey, registry.QUERY_VALUE)
@@ -477,23 +520,7 @@ func ddcCLI(args []string) {
 			fmt.Println(line)
 		}
 	case "--monitor-name":
-		for i := uint32(0); i < 8; i++ {
-			var dd displayDevice
-			dd.cb = uint32(unsafe.Sizeof(dd))
-			r, _, _ := procEnumDisplayDevices.Call(0, uintptr(i), uintptr(unsafe.Pointer(&dd)), 0)
-			if r == 0 {
-				break
-			}
-			fmt.Printf("adapter %d: name=%q str=%q flags=0x%x\n", i,
-				utf16String(dd.deviceName[:]), utf16String(dd.deviceString[:]), dd.stateFlags)
-			var mon displayDevice
-			mon.cb = uint32(unsafe.Sizeof(mon))
-			r2, _, e2 := procEnumDisplayDevices.Call(uintptr(unsafe.Pointer(&dd.deviceName[0])), 0,
-				uintptr(unsafe.Pointer(&mon)), 1)
-			fmt.Printf("   monitor r=%d err=%v str=%q id=%q edid=%q\n", r2, e2,
-				utf16String(mon.deviceString[:]), utf16String(mon.deviceID[:]),
-				edidName(utf16String(mon.deviceID[:])))
-		}
+		fmt.Println(monitorName())
 	case "--ddc-caps":
 		caps, err := ddcCaps(sel)
 		if err != nil {
@@ -533,6 +560,6 @@ func ddcCLI(args []string) {
 		}
 		fmt.Printf("wrote VCP 0x%02X = %d\n", code, v)
 	default:
-		fmt.Println("usage: --ddc-list | --ddc-caps [monitor] | --ddc-get [monitor] [code] | --ddc-set <monitor> <value> [code]")
+		fmt.Println("usage: --ddc-list | --ddc-caps [monitor] | --ddc-get [monitor] [code] | --ddc-set <monitor> <value> [code] | --monitor-name")
 	}
 }
