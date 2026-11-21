@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OneScreen Demo</title>
+<style>
+:root{--bg:#f2f3f5;--card:#fff;--ink:#14161a;--mute:#5d646e;--line:#d8dbe0;--a:#2b6cff;--b:#e08a00;--code:#e7e9ed;--sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;--mono:ui-monospace,Menlo,Consolas,monospace}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%;background:var(--bg);display:flex;align-items:center;justify-content:center;overflow:hidden;font-family:var(--sans)}
+.wrap{width:min(960px,100vw - 32px);padding:16px 0}
+
+/* stage */
+.stage{display:grid;grid-template-areas:"a cl m cr b";grid-template-columns:auto minmax(20px,1fr) minmax(0,3.2fr) minmax(20px,1fr) auto;align-items:center}
+#hA{grid-area:a;--c:var(--a)}#hB{grid-area:b;--c:var(--b)}.mon{grid-area:m;min-width:0}.cab.l{grid-area:cl;--c:var(--a)}.cab.r{grid-area:cr;--c:var(--b)}
+.host{width:130px;padding:16px 10px 14px;text-align:center;border:1.5px solid var(--line);border-radius:16px;background:var(--card);color:var(--mute);transition:border-color .3s,color .3s}
+.host svg{width:52px;height:52px}
+.host b{display:block;color:var(--ink);margin-top:4px}
+.host code{font:12px var(--mono)}
+.host .s{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px;font-size:12px}
+.host .s::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--line)}
+.host .s::after{content:"待机"}
+.stage[data-on=A] #hA,.stage[data-on=B] #hB{border-color:var(--c);color:var(--c)}
+.stage[data-on=A] #hA .s::before,.stage[data-on=B] #hB .s::before{background:var(--c);box-shadow:0 0 10px var(--c)}
+.stage[data-on=A] #hA .s::after,.stage[data-on=B] #hB .s::after{content:"信号输入中"}
+.cab{height:4px;border-radius:2px;background:var(--line)}
+@keyframes fl{to{background-position:20px 0}}
+.stage[data-on=A] .cab.l,.stage[data-on=B] .cab.r{background:repeating-linear-gradient(90deg,var(--c) 0 10px,transparent 10px 20px);animation:fl .7s linear infinite}
+.cab.r{animation-direction:reverse!important}
+
+/* screen */
+.screen{position:relative;aspect-ratio:16/10;border-radius:12px;border:clamp(5px,1vw,9px) solid #15171a;outline:1px solid var(--line);background:#000;overflow:hidden;user-select:none}
+.scr{position:absolute;inset:0;opacity:0;transition:opacity .3s}
+.stage[data-on=A] .scr.a,.stage[data-on=B] .scr.b{opacity:1}
+.scr.a{background:linear-gradient(140deg,#1740b8,#35a8f0)}
+.scr.b{background:linear-gradient(140deg,#8a2bd0,#ff8a5c)}
+
+/* taskbar */
+.tb{position:absolute;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:0 12px;background:rgba(18,20,24,0.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:rgba(255,255,255,0.9);z-index:6}
+.a .tb{bottom:0;height:28px;border-top:1px solid rgba(255,255,255,0.12)}
+.b .tb{top:0;height:24px;border-bottom:1px solid rgba(255,255,255,0.12)}
+.tb-left{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600}
+.win-start{width:16px;height:16px;display:grid;grid-template-columns:1fr 1fr;gap:2px}
+.win-start span{background:#00adef;border-radius:1px}
+.mac-apple{width:12px;height:12px;fill:currentColor}
+.mac-brand{font-size:11.5px;font-weight:700;letter-spacing:-.01em}
+.tb-tray{display:flex;align-items:center;gap:8px}
+.tray-item{display:flex;align-items:center;gap:4px;padding:2px 6px;border-radius:5px;background:rgba(255,255,255,0.12)}
+.tray-item svg{width:14px;height:14px;color:#fff}
+.tb-time{font:11.5px var(--mono);opacity:.85}
+
+/* desktop window */
+.win{position:absolute;left:12%;top:20%;width:50%;height:46%;border-radius:8px;background:rgba(255,255,255,.9);box-shadow:0 12px 30px rgba(0,0,0,.3)}
+.win::before{content:"";position:absolute;left:9px;top:9px;width:8px;height:8px;border-radius:50%;background:#f87171;box-shadow:14px 0 #fbbf24,28px 0 #34d399}
+.win::after{content:"";position:absolute;left:9%;right:9%;top:30%;bottom:12%;background:repeating-linear-gradient(#0002 0 5px,transparent 5px 14px)}
+.scr h3{position:absolute;right:6%;bottom:14%;color:#fff;font-size:clamp(18px,4.2vw,44px);font-weight:900;letter-spacing:-.03em}
+.b h3{bottom:auto;top:16%}
+.bl{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none;z-index:10}
+.screen.bk .bl{animation:bk .45s}
+@keyframes bk{0%,60%{opacity:1}100%{opacity:0}}
+
+/* edge */
+.edge{position:absolute;top:0;bottom:0;width:14%;opacity:0;transition:opacity .3s;pointer-events:none;z-index:4}
+.edge.l{left:0;background:linear-gradient(90deg,rgba(255,255,255,.24),transparent)}
+.edge.r{right:0;background:linear-gradient(270deg,rgba(255,255,255,.24),transparent)}
+.edge span{position:absolute;left:0;right:0;bottom:0;height:0;background:linear-gradient(0deg,var(--a),rgba(56,189,248,.85))}
+.edge.l span{background:linear-gradient(0deg,var(--b),rgba(251,191,36,.85))}
+.edge.arm span{height:100%;transition:height .4s linear}
+.stage[data-on=A] .edge.r,.stage[data-on=B] .edge.l{opacity:1}
+
+/* cursor & stand */
+.fc{position:absolute;left:30%;top:55%;width:20px;opacity:0;pointer-events:none;z-index:8;transition:left .9s cubic-bezier(.4,0,.2,1),top .9s cubic-bezier(.4,0,.2,1),opacity .2s;filter:drop-shadow(0 2px 4px rgba(0,0,0,.45))}
+.stand{width:20%;height:14px;margin:0 auto;background:#1d2024}
+.base{width:36%;height:6px;margin:0 auto;border-radius:6px;background:#2b2f35}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<symbol id="lg" viewBox="0 0 32 32"><rect x="2" y="5" width="28" height="18" rx="4" fill="currentColor"/><path d="M11 27h10" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M10 14h12m-3-3 3 3-3 3" stroke="var(--bg)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="pc" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="14" y="5" width="20" height="38" rx="3"/><circle cx="24" cy="14" r="2"/><path d="M19 34h10"/></g></symbol>
+<symbol id="lp" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="9" y="10" width="30" height="21" rx="2.5"/><path d="M4 38h40"/></g></symbol>
+<symbol id="ap" viewBox="0 0 170 170"><path fill="currentColor" d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.74 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.7-3.04-7.58-7.71-11.64-14.01-6.19-9.67-11.1-20.73-14.74-33.19-3.64-12.46-5.46-24.08-5.46-34.86 0-14.24 3.59-25.85 10.77-34.83 7.18-8.98 16.27-13.62 27.27-13.92 4.79 0 10.15 1.25 16.08 3.75 5.93 2.5 9.87 3.86 11.83 4.08 2.39-.43 6.64-1.93 12.74-4.51 6.1-2.58 11.39-3.77 15.86-3.57 11.64.44 20.9 4.8 27.78 13.08-10.23 6.19-15.24 14.77-15.03 25.74.22 8.7 3.69 16.07 10.42 22.11 6.74 6.04 14.57 9.47 23.51 10.29-2.61 7.61-5.77 15.55-9.48 23.82zM119.22 31.84c0-7.39 2.67-14.41 8.01-21.06 5.34-6.65 11.97-10.78 19.89-12.38.11.98.16 1.85.16 2.61 0 7.39-2.78 14.42-8.33 21.08-5.55 6.66-12.14 10.66-19.73 12-0.22-.76-.33-1.52-.33-2.25z"/></symbol>
+</svg>
+
+<div class="wrap">
+  <div class="stage" id="stage" data-on="A">
+    <div class="host" id="hA"><svg><use href="#pc"/></svg><b>主机 A</b><code>HDMI 1</code><div class="s"></div></div>
+    <div class="cab l"></div><div class="cab r"></div>
+    <div class="host" id="hB"><svg><use href="#lp"/></svg><b>主机 B</b><code>DP 1</code><div class="s"></div></div>
+    <div class="mon">
+      <div class="screen" id="screen">
+        <div class="scr a">
+          <div class="win"></div>
+          <h3>Windows</h3>
+          <div class="tb">
+            <div class="tb-left"><div class="win-start"><span></span><span></span><span></span><span></span></div></div>
+            <div class="tb-tray"><div class="tray-item"><svg><use href="#lg"/></svg></div><span class="tb-time">10:42</span></div>
+          </div>
+        </div>
+        <div class="scr b">
+          <div class="tb">
+            <div class="tb-left"><svg class="mac-apple"><use href="#ap"/></svg><span class="mac-brand">OneScreen</span></div>
+            <div class="tb-tray"><div class="tray-item"><svg><use href="#lg"/></svg></div><span class="tb-time">10:42</span></div>
+          </div>
+          <div class="win"></div>
+          <h3>macOS</h3>
+        </div>
+        <div class="edge l"><span></span></div>
+        <div class="edge r"><span></span></div>
+        <svg class="fc" id="fc" viewBox="0 0 20 24"><path d="M2 2l15 9-6.5 1.5L7 19z" fill="#fff" stroke="#000" stroke-width="1.5" stroke-linejoin="round"/></svg>
+        <div class="bl"></div>
+      </div>
+      <div class="stand"></div><div class="base"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $=s=>document.querySelector(s),st=$('#stage'),sc=$('#screen'),fc=$('#fc');
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+let cur='A',cool=false;
+
+function sw(to){
+  if(cool||to===cur)return;
+  cool=true;setTimeout(()=>cool=false,1000);
+  cur=to;st.dataset.on=to;
+  sc.classList.remove('bk');void sc.offsetWidth;sc.classList.add('bk');
+}
+
+async function loop(){
+  while(true){
+    // In A: glide to right edge
+    fc.style.opacity=1;
+    fc.style.transition='left .9s cubic-bezier(.4,0,.2,1), top .9s cubic-bezier(.4,0,.2,1), opacity .2s';
+    fc.style.left='45%';fc.style.top='54%';
+    await sleep(650);
+
+    fc.style.left='94%';fc.style.top='50%';
+    await sleep(900);
+
+    $('.edge.r').classList.add('arm');
+    await sleep(400);
+    $('.edge.r').classList.remove('arm');
+
+    sw('B');
+    fc.style.transition='none';fc.style.left='5%';fc.style.top='50%';
+    void fc.offsetWidth;
+    fc.style.transition='left .9s cubic-bezier(.4,0,.2,1), top .9s cubic-bezier(.4,0,.2,1), opacity .2s';
+
+    await sleep(50);
+    fc.style.left='45%';fc.style.top='48%';
+    await sleep(750);
+
+    // In B: glide to left edge
+    fc.style.left='6%';fc.style.top='50%';
+    await sleep(900);
+
+    $('.edge.l').classList.add('arm');
+    await sleep(400);
+    $('.edge.l').classList.remove('arm');
+
+    sw('A');
+    fc.style.transition='none';fc.style.left='94%';fc.style.top='50%';
+    void fc.offsetWidth;
+    fc.style.transition='left .9s cubic-bezier(.4,0,.2,1), top .9s cubic-bezier(.4,0,.2,1), opacity .2s';
+
+    await sleep(50);
+    fc.style.left='45%';fc.style.top='54%';
+    await sleep(750);
+  }
+}
+loop();
+</script>
+</body>
+</html>
