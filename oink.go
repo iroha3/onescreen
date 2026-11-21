@@ -287,21 +287,23 @@ func connectDirect(cfg Config) (*subscription, error) {
 // runEvents 常驻订阅：连上 → 逐行读 → 断开重连。每次连上都回调一次做基准对齐。
 func runEvents(ctx context.Context, cfg func() Config, log *logFile, onFocus func(Focus), onConnect func(), onProblem func(string)) {
 	problem := ""
+	report := func(msg string) {
+		if msg == problem {
+			return
+		}
+		problem = msg
+		onProblem(msg)
+	}
+
 	for ctx.Err() == nil {
 		sub, err := connectDirect(cfg())
 		if err != nil {
-			if msg := err.Error(); msg != problem {
-				problem = msg
-				log.Printf("[oink] %s，稍后重试", msg)
-				onProblem(msg)
-			}
+			log.Printf("[oink] %s，稍后重试", err)
+			report("Oink 没在运行")
 			sleepCtx(ctx, 5*time.Second)
 			continue
 		}
-		if problem != "" {
-			problem = ""
-			onProblem("")
-		}
+		report("")
 		log.Printf("[oink] 已订阅焦点事件")
 		onConnect()
 
@@ -321,6 +323,8 @@ func runEvents(ctx context.Context, cfg func() Config, log *logFile, onFocus fun
 		if ctx.Err() != nil {
 			return
 		}
+		// 断开就是断开：立刻让界面知道，重连是重连的事
+		report("Oink 没在运行")
 		log.Printf("[oink] 订阅断开，重连中")
 		sleepCtx(ctx, 3*time.Second)
 	}

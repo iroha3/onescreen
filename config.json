@@ -1,7 +1,7 @@
 {
   "monitor": "0",
   "local_input": 15,
-  "peer_input": 0,
+  "peer_input": 17,
   "focus_source": "oink",
   "auto_switch": true,
   "delay_ms": 600,

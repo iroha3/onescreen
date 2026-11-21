@@ -17,6 +17,8 @@ type textSet struct {
 	localPort  string
 	autostart  string
 	about      string
+	aboutHelp  string
+	aboutKeys  string
 	quit       string
 	warnDdc    string
 	needPeer   string
@@ -32,11 +34,13 @@ var textsZH = textSet{
 	peerPort:   "对端口",
 	localPort:  "本机口",
 	autostart:  "开机自启",
-	about:      "关于",
+	about:      "帮助/关于",
+	aboutHelp:  "双击托盘切换屏幕；右键设置对端口。",
+	aboutKeys:  "切过去黑屏 = 对端口选错了，换一个即可。",
 	quit:       "退出",
 	warnDdc:    "显示器没有响应 DDC/CI",
 	needPeer:   "请先在「对端口」里选一次",
-	aboutTitle: "关于 OneScreen",
+	aboutTitle: "帮助/关于",
 	aboutSub:   "单显示器多设备切换",
 }
 
@@ -48,11 +52,13 @@ var textsEN = textSet{
 	peerPort:   "Peer port",
 	localPort:  "This port",
 	autostart:  "Start with Windows",
-	about:      "About",
+	about:      "Help/About",
+	aboutHelp:  "Double-click the tray icon to switch. Right-click to set the peer port.",
+	aboutKeys:  "Black screen after switching = wrong peer port, pick another one.",
 	quit:       "Quit",
 	warnDdc:    "Monitor isn't responding to DDC/CI",
 	needPeer:   "Pick a peer port first",
-	aboutTitle: "About OneScreen",
+	aboutTitle: "Help/About",
 	aboutSub:   "One screen, many computers",
 }
 

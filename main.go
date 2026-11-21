@@ -157,7 +157,14 @@ func (a *app) prepare() {
 			a.log.Printf("[ddc] 读不到本机口：%v", err)
 		}
 	}
-	// 对端口不猜：留空，等用户从菜单里选一次。
+	// 对端口：默认取候选里最小的那个。选错了切过去黑一下屏，改一次就记住了。
+	if cfg.PeerInput == 0 || cfg.PeerInput == cfg.LocalInput {
+		if cands := a.candidates(); len(cands) > 0 {
+			cfg.PeerInput = cands[0]
+			a.setConfig(cfg)
+			a.log.Printf("[ddc] 对端口默认 = %d", cfg.PeerInput)
+		}
+	}
 }
 
 // candidates 是对端口可选项：显示器支持的输入源里排除本机口。
@@ -443,8 +450,11 @@ func showAbout() {
 		monitor = "?"
 	}
 	body := fmt.Sprintf(
-		"OneScreen %s\n%s\n\n%s %d · %s\n%s\n%s\n\n%s",
-		version, t().aboutSub,
+		"%s\n\n%s\n\n%s\n%s\n%s %d · %s\n\n%s\n%s\n\n%s",
+		"OneScreen "+version,
+		t().aboutHelp,
+		t().aboutSub,
+		t().aboutKeys,
 		t().localPort, cfg.LocalInput, monitor,
 		configPath(),
 		filepath.Join(dataDir(), "switch.log"),
