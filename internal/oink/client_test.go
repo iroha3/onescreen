@@ -1,6 +1,8 @@
 package oink
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -46,5 +48,25 @@ func TestHandleLine(t *testing.T) {
 	handleLine(line4, nil, onFocus)
 	if gotFocus == nil || gotFocus.IsLocal != false {
 		t.Fatalf("expected direct focus event, got %+v", gotFocus)
+	}
+}
+
+func TestHasBuildFile(t *testing.T) {
+	if HasBuildFile("") {
+		t.Errorf("empty dir should not have build file")
+	}
+
+	tmp := t.TempDir()
+	if HasBuildFile(tmp) {
+		t.Errorf("empty temp dir should not have build file")
+	}
+
+	bf := filepath.Join(tmp, "oink-build.json")
+	if err := os.WriteFile(bf, []byte(`{"version":"0.1.0"}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	if !HasBuildFile(tmp) {
+		t.Errorf("temp dir with oink-build.json should return true")
 	}
 }

@@ -1,0 +1,196 @@
+name: OneScreen CI & Release
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    name: Unit Tests & Code Quality
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          check-latest: true
+
+      - name: Run Tests
+        run: |
+          if [ -d "tools/onescreen" ]; then cd tools/onescreen; fi
+          go test -v ./...
+          go vet ./...
+
+      - name: Cross-compile Verification
+        run: |
+          if [ -d "tools/onescreen" ]; then cd tools/onescreen; fi
+          echo "Checking Linux amd64..."
+          GOOS=linux GOARCH=amd64 go build -o /dev/null .
+          echo "Checking Linux arm64..."
+          GOOS=linux GOARCH=arm64 go build -o /dev/null .
+          echo "Checking Windows amd64..."
+          GOOS=windows GOARCH=amd64 go build -o /dev/null .
+          echo "Checking Darwin packages..."
+          GOOS=darwin GOARCH=arm64 go test ./internal/oink ./internal/ddc
+
+  detect-version:
+    name: Check Version Bump
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.check.outputs.version }}
+      tag: ${{ steps.check.outputs.tag }}
+      is_new: ${{ steps.check.outputs.is_new }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract & Check Version
+        id: check
+        run: |
+          if [ -d "tools/onescreen" ]; then cd tools/onescreen; fi
+          VERSION=$(grep -E 'const version = "[0-9.]+"' main.go | sed -E 's/.*"([0-9.]+)".*/\1/')
+          TAG="v$VERSION"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists. No new release needed."
+            echo "is_new=false" >> $GITHUB_OUTPUT
+          else
+            echo "New version detected: $TAG"
+            echo "is_new=true" >> $GITHUB_OUTPUT
+          fi
+
+  create-tag:
+    name: Create Git Tag
+    needs: detect-version
+    if: needs.detect-version.outputs.is_new == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Push Tag
+        run: |
+          TAG="${{ needs.detect-version.outputs.tag }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "Release $TAG"
+          git push origin "$TAG"
+
+  build-release:
+    name: Build Release Binaries
+    needs: [detect-version, create-tag]
+    if: always() && (needs.detect-version.outputs.is_new == 'true' || startsWith(github.ref, 'refs/tags/v'))
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            goos: windows
+            goarch: amd64
+            artifact_name: onescreen-windows-amd64.exe
+          - os: ubuntu-latest
+            goos: linux
+            goarch: amd64
+            artifact_name: onescreen-linux-amd64
+          - os: ubuntu-latest
+            goos: linux
+            goarch: arm64
+            artifact_name: onescreen-linux-arm64
+          - os: macos-latest
+            goos: darwin
+            goarch: arm64
+            artifact_name: onescreen-darwin-arm64
+          - os: macos-latest
+            goos: darwin
+            goarch: amd64
+            artifact_name: onescreen-darwin-amd64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Build Windows Binary with Resources
+        if: matrix.goos == 'windows'
+        shell: pwsh
+        run: |
+          if (Test-Path "tools/onescreen") { Set-Location "tools/onescreen" }
+          go install github.com/akavel/rsrc@latest
+          rsrc -manifest app.manifest -ico icon.ico -o rsrc_windows_amd64.syso -arch amd64
+          $env:GOOS = "${{ matrix.goos }}"
+          $env:GOARCH = "${{ matrix.goarch }}"
+          go build -ldflags "-H windowsgui -s -w" -o "${{ matrix.artifact_name }}" .
+          if (Test-Path "../../tools") { Move-Item "${{ matrix.artifact_name }}" ../../ -Force }
+
+      - name: Build Unix Binary
+        if: matrix.goos != 'windows'
+        run: |
+          if [ -d "tools/onescreen" ]; then cd tools/onescreen; fi
+          export GOOS="${{ matrix.goos }}"
+          export GOARCH="${{ matrix.goarch }}"
+          go build -ldflags "-s -w" -o "${{ matrix.artifact_name }}" .
+          if [ -d "../../tools" ]; then mv "${{ matrix.artifact_name }}" ../../; fi
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: ${{ matrix.artifact_name }}
+
+  publish-release:
+    name: Publish GitHub Release
+    needs: [detect-version, build-release]
+    if: always() && (needs.detect-version.outputs.is_new == 'true' || startsWith(github.ref, 'refs/tags/v'))
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: Package Assets
+        run: |
+          cd release-assets
+          chmod +x onescreen-linux-* onescreen-darwin-* 2>/dev/null || true
+          tar -czf onescreen-linux-amd64.tar.gz onescreen-linux-amd64
+          tar -czf onescreen-linux-arm64.tar.gz onescreen-linux-arm64
+          tar -czf onescreen-darwin-arm64.tar.gz onescreen-darwin-arm64
+          tar -czf onescreen-darwin-amd64.tar.gz onescreen-darwin-amd64
+          zip onescreen-windows-amd64.zip onescreen-windows-amd64.exe
+          ls -la
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.detect-version.outputs.tag || github.ref_name }}
+          name: OneScreen ${{ needs.detect-version.outputs.tag || github.ref_name }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          files: |
+            release-assets/*.tar.gz
+            release-assets/*.zip
+            release-assets/*.exe

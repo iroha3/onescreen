@@ -33,6 +33,9 @@ func (l *logFile) open() {
 }
 
 func (l *logFile) Printf(format string, args ...any) {
+	if l == nil {
+		return
+	}
 	line := fmt.Sprintf("%s %s\n", time.Now().Format("2006-01-02 15:04:05.000"), fmt.Sprintf(format, args...))
 	l.mu.Lock()
 	defer l.mu.Unlock()

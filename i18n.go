@@ -104,6 +104,8 @@ func portDisplayName(v int) string {
 		return "HDMI 2 (18)"
 	case 19:
 		return "USB-C (19)"
+	case 27:
+		return "USB-C (27)"
 	default:
 		return fmt.Sprintf("%s (%d)", t().portNameUnknown, v)
 	}
@@ -126,7 +128,7 @@ func portShortName(v int) string {
 		return "HDMI 1"
 	case 18:
 		return "HDMI 2"
-	case 19:
+	case 19, 27:
 		return "USB-C"
 	default:
 		return fmt.Sprintf("%d", v)
