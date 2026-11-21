@@ -1,7 +1,6 @@
 package main
 
 import (
-	_ "embed"
 	"context"
 	"fmt"
 	"os"
@@ -9,47 +8,19 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
-	"unsafe"
 
 	"github.com/energye/systray"
-	"golang.org/x/sys/windows/registry"
-)
 
-//go:embed tray.ico
-var iconBytes []byte
+	"onescreen/internal/ddc"
+	"onescreen/internal/oink"
+	"onescreen/internal/platform"
+)
 
 const version = "0.1.0"
-const copyright = "© 2026"
-
-const runKey = `Software\Microsoft\Windows\CurrentVersion\Run`
-const runValue = "OneScreen"
+const repoURL = "https://github.com/iroha3/onescreen"
 
 var delayChoices = []int{200, 300, 400, 600, 800, 1000}
-
-var (
-	kernel32          = syscall.NewLazyDLL("kernel32.dll")
-	procAttachConsole = kernel32.NewProc("AttachConsole")
-	procGetStdHandle  = kernel32.NewProc("GetStdHandle")
-	procMessageBox    = user32.NewProc("MessageBoxW")
-)
-
-// attachConsole 让 GUI 子系统程序也能往调用方的控制台打印。
-func attachConsole() {
-	const stdOutputHandle = ^uintptr(11) // -11
-	if h, _, _ := procGetStdHandle.Call(stdOutputHandle); h != 0 && h != ^uintptr(0) {
-		return // 已经有可用的 stdout（管道、重定向、终端里直接跑），别动它
-	}
-	const attachParentProcess = ^uintptr(0) // (DWORD)-1
-	if r, _, _ := procAttachConsole.Call(attachParentProcess); r == 0 {
-		return
-	}
-	if f, err := os.OpenFile("CONOUT$", os.O_WRONLY, 0); err == nil {
-		os.Stdout = f
-		os.Stderr = f
-	}
-}
 
 type app struct {
 	mu     sync.RWMutex
@@ -88,18 +59,17 @@ func (a *app) setConfig(c Config) {
 // ---------------------------------------------------------------- 启动
 
 func main() {
-	if len(os.Args) > 1 && (strings.HasPrefix(os.Args[1], "--ddc") || os.Args[1] == "--monitor-name") {
+	if len(os.Args) > 1 && (strings.HasPrefix(os.Args[1], "--ddc") || os.Args[1] == "--monitor-name" || os.Args[1] == "--about") {
 		ddcCLI(os.Args[1:])
 		return
 	}
-	if !acquireSingleInstance() {
-		messageBox("OneScreen", "OneScreen 已经在运行了。")
+	if !platform.AcquireSingleInstance() {
+		platform.MessageBox("OneScreen", "OneScreen 已经在运行了。")
 		return
 	}
 
 	log := newLog(dataDir())
 	a := &app{log: log}
-	currentApp = a
 	a.cfg = loadConfig(log)
 	a.sw = NewSwitcher(a.Config, log, a.onDdcProblem)
 
@@ -109,11 +79,10 @@ func main() {
 	systray.Run(a.onReady, a.onExit)
 }
 
-// prepare 把「这台机器」的事实确定下来：本机口、Oink 在不在、显示器叫什么。
 func (a *app) prepare() {
 	cfg := a.Config()
 
-	// 配置可能跟着 exe 从另一台机器拷过来：靠机器名认出来，两个口对调。
+	// 配置可能跟着可执行文件拷过来：靠机器名认出并对调两口
 	if host, err := os.Hostname(); err == nil && cfg.Machine != "" && cfg.Machine != host {
 		old := cfg.Machine
 		cfg.LocalInput, cfg.PeerInput = cfg.PeerInput, cfg.LocalInput
@@ -129,7 +98,7 @@ func (a *app) prepare() {
 
 	a.oinkDir = cfg.OinkDir
 	if a.oinkDir == "" {
-		a.oinkDir = findOinkInstall()
+		a.oinkDir = oink.FindInstall()
 		if a.oinkDir != "" {
 			cfg.OinkDir = a.oinkDir
 			cfg.AgentPath = filepath.Join(a.oinkDir, "oink-agent.exe")
@@ -142,14 +111,14 @@ func (a *app) prepare() {
 		a.log.Printf("[oink] 没找到，只做手动切换")
 	}
 
-	if name := monitorName(); name != "" {
+	if name := ddc.MonitorName(); name != "" {
 		a.monitor = name
 		a.log.Printf("[ddc] 显示器 %s", name)
 	}
 
-	// 本机口：只读，自动读一次。你能点到托盘，说明屏幕正显示这台机器。
+	// 本机口：自动读取
 	if cfg.LocalInput == 0 {
-		if cur, _, err := ddcGet(cfg.Monitor, vcpInputSource); err == nil {
+		if cur, _, err := ddc.GetVCP(cfg.Monitor, ddc.VCPInputSource); err == nil {
 			cfg.LocalInput = int(cur)
 			a.setConfig(cfg)
 			a.log.Printf("[ddc] 本机口 = %d", cur)
@@ -157,17 +126,16 @@ func (a *app) prepare() {
 			a.log.Printf("[ddc] 读不到本机口：%v", err)
 		}
 	}
-	// 对端口：默认取候选里最小的那个。选错了切过去黑一下屏，改一次就记住了。
+	// 另一台接的接口：默认取候选最小值
 	if cfg.PeerInput == 0 || cfg.PeerInput == cfg.LocalInput {
 		if cands := a.candidates(); len(cands) > 0 {
 			cfg.PeerInput = cands[0]
 			a.setConfig(cfg)
-			a.log.Printf("[ddc] 对端口默认 = %d", cfg.PeerInput)
+			a.log.Printf("[ddc] 另一台接的接口默认 = %d", cfg.PeerInput)
 		}
 	}
 }
 
-// candidates 是对端口可选项：显示器支持的输入源里排除本机口。
 func (a *app) candidates() []int {
 	cfg := a.Config()
 	var out []int
@@ -196,11 +164,10 @@ func (a *app) candidates() []int {
 // ---------------------------------------------------------------- 托盘
 
 func (a *app) onReady() {
-	systray.SetIcon(iconBytes)
-	systray.SetTooltip("OneScreen")
+	systray.SetIcon(platform.TrayIconBytes())
+	systray.SetTooltip("OneScreen · " + t().tooltip)
 	systray.SetOnDClick(func(m systray.IMenu) {
 		if a.Config().PeerInput == 0 {
-			// 还没选过对端口：把菜单弹出来，让双击这个动作直接带到设置项前面
 			go func() {
 				time.Sleep(150 * time.Millisecond)
 				_ = m.ShowMenu()
@@ -216,15 +183,21 @@ func (a *app) onReady() {
 
 	a.mSwitch = systray.AddMenuItem(t().switchTo, "")
 
-	// 自动切屏：只在 Oink 连上时显示
-	a.mAuto = systray.AddMenuItem(fmt.Sprintf(t().autoFollow, a.focusSourceName()), "")
+	// 自动切屏：常驻，未连上时禁用并提示
+	a.mAuto = systray.AddMenuItem(fmt.Sprintf(t().autoFollowOffline, a.focusSourceName()), "")
+	a.mAuto.Disable()
 	a.mAutoOn = a.mAuto.AddSubMenuItemCheckbox(t().enable, "", a.Config().AutoSwitch)
+	if a.Config().AutoSwitch {
+		a.mAutoOn.Check()
+	} else {
+		a.mAutoOn.Uncheck()
+	}
+	a.sw.SetPaused(!a.Config().AutoSwitch)
 	a.mDelay = a.mAuto.AddSubMenuItem(t().delay, "")
 	a.delayItem = map[int]*systray.MenuItem{}
 	for _, ms := range delayChoices {
 		a.delayItem[ms] = a.mDelay.AddSubMenuItem(strconv.Itoa(ms)+" ms", "")
 	}
-	a.mAuto.Hide()
 
 	systray.AddSeparator()
 
@@ -232,13 +205,13 @@ func (a *app) onReady() {
 	a.peerItems = map[int]*systray.MenuItem{}
 	for _, v := range a.candidates() {
 		v := v
-		item := a.mPeer.AddSubMenuItem(strconv.Itoa(v), "")
+		item := a.mPeer.AddSubMenuItem(portDisplayName(v), "")
 		a.peerItems[v] = item
 		item.Click(func() { a.setPeer(v) })
 	}
 
 	systray.AddSeparator()
-	a.mAutoStart = systray.AddMenuItemCheckbox(t().autostart, "", isAutostartEnabled())
+	a.mAutoStart = systray.AddMenuItemCheckbox(t().autostart, "", platform.IsAutostartEnabled())
 	mAbout := systray.AddMenuItem(t().about, "")
 	mQuit := systray.AddMenuItem(t().quit, "")
 
@@ -249,15 +222,14 @@ func (a *app) onReady() {
 	go func() {
 		ctx, cancel := context.WithCancel(context.Background())
 		a.cancel = cancel
-		go runEvents(ctx, a.Config, a.log,
-			func(f Focus) {
+		platform.StartEmergencyHotkey(ctx, a.sw.SwitchToLocal, a.log.Printf)
+		go oink.RunEvents(ctx, a.Config().OinkDir, a.log.Printf,
+			func(f oink.Focus) {
 				a.sw.OnFocus(f)
-				systray.SetTooltip("OneScreen · " + a.sw.StatusText())
 			},
 			func() {
 				a.setOinkOnline(true)
 				a.sw.Resync()
-				systray.SetTooltip("OneScreen · " + a.sw.StatusText())
 			},
 			func(msg string) {
 				if msg == "" {
@@ -265,14 +237,17 @@ func (a *app) onReady() {
 					return
 				}
 				a.setOinkOnline(false)
-				a.log.Printf("[oink] %s", msg)
 			})
 	}()
 
 	a.mSwitch.Click(func() { a.sw.SwitchToPeer() })
 	a.mAutoOn.Click(func() { a.toggleAuto() })
 	a.mAutoStart.Click(func() { a.toggleAutostart() })
-	mAbout.Click(showAbout)
+	mAbout.Click(func() {
+		if !platform.ShowAbout(version, repoURL, aboutContent(), t().aboutTitle, t().openGitHub) {
+			platform.MessageBox(t().aboutTitle, "OneScreen "+version+"\n\n"+aboutContent())
+		}
+	})
 	mQuit.Click(func() {
 		a.log.Printf("退出")
 		systray.Quit()
@@ -293,15 +268,16 @@ func (a *app) focusSourceName() string {
 	}
 }
 
-// setOinkOnline 控制自动切屏那一组显不显示。没连上就没有这一组。
 func (a *app) setOinkOnline(online bool) {
 	if a.mAuto == nil {
 		return
 	}
 	if online {
-		a.mAuto.Show()
+		a.mAuto.Enable()
+		a.mAuto.SetTitle(fmt.Sprintf(t().autoFollow, a.focusSourceName()))
 	} else {
-		a.mAuto.Hide()
+		a.mAuto.Disable()
+		a.mAuto.SetTitle(fmt.Sprintf(t().autoFollowOffline, a.focusSourceName()))
 	}
 }
 
@@ -318,7 +294,7 @@ func (a *app) refreshLabels() {
 	cfg := a.Config()
 	if a.mSwitch != nil {
 		if cfg.PeerInput > 0 {
-			a.mSwitch.SetTitle(fmt.Sprintf("%s (%d)", t().switchTo, cfg.PeerInput))
+			a.mSwitch.SetTitle(fmt.Sprintf("%s (%s)", t().switchTo, portShortName(cfg.PeerInput)))
 		} else {
 			a.mSwitch.SetTitle(t().switchTo)
 		}
@@ -350,14 +326,20 @@ func (a *app) setPeer(v int) {
 	c.PeerInput = v
 	a.setConfig(c)
 	a.refreshLabels()
-	a.log.Printf("[config] 对端口 = %d", v)
+	a.log.Printf("[config] 另一台接的接口 = %d", v)
 }
 
 func (a *app) toggleAuto() {
+	enable := !a.mAutoOn.Checked()
+	if enable {
+		a.mAutoOn.Check()
+	} else {
+		a.mAutoOn.Uncheck()
+	}
 	c := a.Config()
-	c.AutoSwitch = a.mAutoOn.Checked()
+	c.AutoSwitch = enable
 	a.setConfig(c)
-	a.sw.SetPaused(!c.AutoSwitch)
+	a.sw.SetPaused(!enable)
 }
 
 func (a *app) setDelay(ms int, item *systray.MenuItem) {
@@ -374,7 +356,7 @@ func (a *app) setDelay(ms int, item *systray.MenuItem) {
 
 func (a *app) toggleAutostart() {
 	enable := !a.mAutoStart.Checked()
-	if err := setAutostart(enable); err != nil {
+	if err := platform.SetAutostart(enable); err != nil {
 		a.log.Printf("[config] 设置开机自启失败：%v", err)
 		return
 	}
@@ -388,7 +370,6 @@ func (a *app) toggleAutostart() {
 	a.setConfig(c)
 }
 
-// onDdcProblem 显示器不响应时把警告行亮出来，正常了再藏起来。
 func (a *app) onDdcProblem(msg string) {
 	if a.mWarn == nil {
 		return
@@ -401,15 +382,13 @@ func (a *app) onDdcProblem(msg string) {
 	a.mWarn.Show()
 }
 
-// refreshInputsCache 后台读一次能力串，把支持的输入源存进配置。
 func (a *app) refreshInputsCache() {
 	c := a.Config()
 	if len(c.InputsCache) > 0 {
-		return // 已经缓存过，读一次要 1.8 秒，不再重复打扰显示器
+		return
 	}
-	// 读能力串会占住 DDC 通道 1.8 秒，等启动时的状态对齐先做完
 	time.Sleep(5 * time.Second)
-	found, err := ddcInputs(c.Monitor)
+	found, err := ddc.Inputs(c.Monitor)
 	if err != nil || len(found) == 0 {
 		a.log.Printf("[ddc] 读不到输入源列表：%v", err)
 		return
@@ -438,88 +417,29 @@ func sameInts(a, b []int) bool {
 	return true
 }
 
-// ---------------------------------------------------------------- 关于
-
-var currentApp *app
-
-func showAbout() {
-	a := currentApp
-	cfg := a.Config()
-	monitor := a.monitor
-	if monitor == "" {
-		monitor = "?"
-	}
-	body := fmt.Sprintf(
-		"%s\n\n%s\n\n%s\n%s\n%s %d · %s\n\n%s\n%s\n\n%s",
-		"OneScreen "+version,
-		t().aboutHelp,
-		t().aboutSub,
-		t().aboutKeys,
-		t().localPort, cfg.LocalInput, monitor,
-		configPath(),
-		filepath.Join(dataDir(), "switch.log"),
-		copyright,
-	)
-	messageBox(t().aboutTitle, body)
-}
-
-func messageBox(title, body string) {
-	pt, err1 := syscall.UTF16PtrFromString(title)
-	pb, err2 := syscall.UTF16PtrFromString(body)
-	if err1 != nil || err2 != nil {
-		return
-	}
-	const mbOK = 0x0
-	procMessageBox.Call(0, uintptr(unsafe.Pointer(pb)), uintptr(unsafe.Pointer(pt)), mbOK)
-}
-
-// ---------------------------------------------------------------- 开机自启
-
-func isAutostartEnabled() bool {
-	k, err := registry.OpenKey(registry.CURRENT_USER, runKey, registry.QUERY_VALUE)
-	if err != nil {
-		return false
-	}
-	defer k.Close()
-	_, _, err = k.GetStringValue(runValue)
-	return err == nil
-}
-
-func setAutostart(enable bool) error {
-	k, err := registry.OpenKey(registry.CURRENT_USER, runKey, registry.SET_VALUE|registry.QUERY_VALUE)
-	if err != nil {
-		return err
-	}
-	defer k.Close()
-	if !enable {
-		return k.DeleteValue(runValue)
-	}
-	exe, err := os.Executable()
-	if err != nil {
-		return err
-	}
-	return k.SetStringValue(runValue, exe)
+func aboutContent() string {
+	return fmt.Sprintf(t().aboutBody, configPath(), logPath(), t().aboutKeys)
 }
 
 // ---------------------------------------------------------------- 命令行
 
 func ddcCLI(args []string) {
-	attachConsole()
+	platform.AttachConsole()
 	sel := "0"
 	if len(args) > 1 {
 		sel = args[1]
 	}
 	switch args[0] {
 	case "--ddc-list":
-		ms, err := enumMonitors()
+		ms, err := ddc.EnumMonitors()
 		if err != nil {
 			fmt.Println("error:", err)
 			return
 		}
-		defer closeMonitors(ms)
-		inputs, _ := ddcInputs(sel)
+		defer ddc.CloseMonitors(ms)
+		inputs, _ := ddc.Inputs(sel)
 		for i, m := range ms {
-			line := fmt.Sprintf("%d  %s", i, m.desc)
+			line := fmt.Sprintf("%d  %s", i, m.Desc)
 			if len(inputs) > 0 {
 				parts := make([]string, len(inputs))
 				for j, v := range inputs {
@@ -530,22 +450,26 @@ func ddcCLI(args []string) {
 			fmt.Println(line)
 		}
 	case "--monitor-name":
-		fmt.Println(monitorName())
+		fmt.Println(ddc.MonitorName())
+	case "--about":
+		if !platform.ShowAbout(version, repoURL, aboutContent(), t().aboutTitle, t().openGitHub) {
+			platform.MessageBox(t().aboutTitle, "OneScreen "+version+"\n\n"+aboutContent())
+		}
 	case "--ddc-caps":
-		caps, err := ddcCaps(sel)
+		caps, err := ddc.Caps(sel)
 		if err != nil {
 			fmt.Println("error:", err)
 			return
 		}
 		fmt.Println(caps)
 	case "--ddc-get":
-		code := byte(vcpInputSource)
+		code := byte(ddc.VCPInputSource)
 		if len(args) > 2 {
 			var c uint32
 			fmt.Sscanf(args[2], "%v", &c)
 			code = byte(c)
 		}
-		cur, max, err := ddcGet(sel, code)
+		cur, max, err := ddc.GetVCP(sel, code)
 		if err != nil {
 			fmt.Println("error:", err)
 			return
@@ -558,13 +482,13 @@ func ddcCLI(args []string) {
 		}
 		var v uint32
 		fmt.Sscanf(args[2], "%d", &v)
-		code := byte(vcpInputSource)
+		code := byte(ddc.VCPInputSource)
 		if len(args) > 3 {
 			var c uint32
 			fmt.Sscanf(args[3], "%v", &c)
 			code = byte(c)
 		}
-		if err := ddcSet(sel, code, v); err != nil {
+		if err := ddc.SetVCP(sel, code, v); err != nil {
 			fmt.Println("error:", err)
 			return
 		}

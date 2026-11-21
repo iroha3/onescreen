@@ -3,6 +3,9 @@ package main
 import (
 	"sync"
 	"time"
+
+	"onescreen/internal/ddc"
+	"onescreen/internal/oink"
 )
 
 type action struct {
@@ -10,14 +13,14 @@ type action struct {
 }
 
 // Switcher 是与 Oink 无关的状态机：延迟、取消、串行。
-// 「显示器现在在哪一侧」不再由自己记账，交给 ensureInput 直接问显示器。
+// 「显示器现在在哪一侧」不再由自己记账，交给 ddc.EnsureInput 直接问显示器。
 type Switcher struct {
 	mu      sync.Mutex
 	cfg     func() Config
 	log     *logFile
 	onError func(string)
 
-	focus   *Focus
+	focus   *oink.Focus
 	timer   *time.Timer
 	running bool
 	pending *action
@@ -69,7 +72,7 @@ func (s *Switcher) StatusText() string {
 
 // Resync 用当前焦点重新对齐基准，不触发切换。启动和每次重连都调一次。
 func (s *Switcher) Resync() {
-	f, ok := readStatus(s.cfg())
+	f, ok := oink.ReadStatus(s.cfg().AgentPath)
 	if !ok {
 		s.log.Printf("[switch] 读不到 Oink 焦点状态")
 		return
@@ -87,7 +90,7 @@ func localWord(local bool) string {
 	return "在对端"
 }
 
-func (s *Switcher) OnFocus(f Focus) {
+func (s *Switcher) OnFocus(f oink.Focus) {
 	s.mu.Lock()
 	if s.focus != nil && s.focus.IsLocal == f.IsLocal && s.focus.Device == f.Device {
 		s.mu.Unlock()
@@ -183,6 +186,24 @@ func (s *Switcher) SwitchToPeer() {
 	s.drain()
 }
 
+// SwitchToLocal 应急切回本机（逃生热键 / 异常回退）。
+func (s *Switcher) SwitchToLocal() {
+	s.mu.Lock()
+	if s.running {
+		s.mu.Unlock()
+		return
+	}
+	s.running = true
+	s.mu.Unlock()
+
+	s.apply(true)
+
+	s.mu.Lock()
+	s.running = false
+	s.mu.Unlock()
+	s.drain()
+}
+
 // apply 是唯一真正动显示器的地方。
 func (s *Switcher) apply(toLocal bool) {
 	cfg := s.cfg()
@@ -194,7 +215,7 @@ func (s *Switcher) apply(toLocal bool) {
 		s.log.Printf("[switch] %s输入源还没确定", side)
 		return
 	}
-	changed, err := ensureInput(cfg.Monitor, uint32(target))
+	changed, err := ddc.EnsureInput(cfg.Monitor, uint32(target))
 	if err != nil {
 		s.log.Printf("[switch] 切到%s失败：%v", side, err)
 		if s.onError != nil {

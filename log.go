@@ -43,3 +43,6 @@ func (l *logFile) Printf(format string, args ...any) {
 }
 
 func (l *logFile) Path() string { return l.path }
+
+// logPath 给「关于」显示用。
+func logPath() string { return filepath.Join(dataDir(), "switch.log") }

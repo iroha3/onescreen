@@ -7,36 +7,37 @@
 ## 编译
 
 ```bash
-# 换图标时才需要重跑这一行（生成 PE 资源，exe 的图标靠它）
-rsrc -ico icon.ico -o rsrc.syso -arch amd64
+# 换图标或清单时才需要重跑这一行（生成 PE 资源，exe 图标和现代控件清单靠它）
+rsrc -manifest app.manifest -ico icon.ico -o rsrc.syso -arch amd64
 
 go build -ldflags "-H windowsgui -s -w" -o onescreen.exe .
 ```
 
 `-H windowsgui` 去掉控制台窗口，`-s -w` 去掉符号表（约 4MB）。
-exe 的图标来自 `rsrc.syso`，托盘图标来自 `go:embed tray.ico`，是两套东西。
+exe 的图标来自 `rsrc.syso`，托盘图标来自 `go:embed tray.ico`。
 
 ## 用法
 
-双击 `onescreen.exe`，托盘出现一个蓝色圆点。
+双击 `onescreen.exe`，托盘出现复古监视器图标。
 
 - **双击托盘** → 切到对端
+- **应急热键** → `Ctrl + Alt + Shift + S` 无论何时强制切回本机（防对端锁屏/假死）
 - **右键** → 菜单
 
 ```
-切到另一台 (18)              ← 数字跟着「对端口」设置走
-随 Oink 自动切屏 ▸           ← 只在 Oink 连上时出现
+切到另一台 (HDMI 2)             ← 显示目标接口友好名称
+随 Oink 自动切屏 ▸              ← 未连接时变灰提示，连上可用
    启用 ✓
    延迟 ▸ 200 / 300 / 400 / 600 / 800 / 1000 ms
 ─────
-对端口 ▸ 17 / 18             已排除本机口
+另一台接的接口 ▸ HDMI 1 (17) / HDMI 2 (18)   已排除本机口
 ─────
 开机自启
-帮助/关于
+帮助/关于…
 退出
 ```
 
-**第一次用**：对端口默认取候选里最小的那个。切过去黑一下屏说明选错了，在菜单里换一个就行，
+**第一次用**：另一台接的接口默认取候选里最小的那个。切过去黑一下屏说明选错了，在菜单里换一个就行，
 改一次永久记住。
 
 菜单和关于窗口跟随系统语言（中/英），换语言重启生效。
