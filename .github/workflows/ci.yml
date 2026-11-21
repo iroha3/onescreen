@@ -218,3 +218,26 @@ jobs:
             release-assets/*.tar.gz
             release-assets/*.zip
             release-assets/*.exe
+
+  deploy-pages:
+    name: Deploy GitHub Pages
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Prepare Docs Directory
+        run: |
+          if [ -d "tools/onescreen/docs" ]; then
+            cp -r tools/onescreen/docs ./public
+          else
+            cp -r docs ./public
+          fi
+
+      - name: Deploy to gh-pages branch
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
