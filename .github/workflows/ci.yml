@@ -23,6 +23,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.22'
+          cache: false
           check-latest: true
 
       - name: Run Tests
@@ -62,6 +63,8 @@ jobs:
 
       - name: Extract & Check Version
         id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if [ -d "tools/onescreen" ]; then cd tools/onescreen; fi
           VERSION=$(grep -E 'const version = "[0-9.]+"' main.go | sed -E 's/.*"([0-9.]+)".*/\1/')
@@ -69,11 +72,11 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "tag=$TAG" >> $GITHUB_OUTPUT
 
-          if git rev-parse "$TAG" >/dev/null 2>&1; then
-            echo "Tag $TAG already exists. No new release needed."
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists. No new release needed."
             echo "is_new=false" >> $GITHUB_OUTPUT
           else
-            echo "New version detected: $TAG"
+            echo "Release $TAG does not exist. Triggering release pipeline."
             echo "is_new=true" >> $GITHUB_OUTPUT
           fi
 
@@ -93,14 +96,15 @@ jobs:
           TAG="${{ needs.detect-version.outputs.tag }}"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag -a "$TAG" -m "Release $TAG"
-          git push origin "$TAG"
+          git tag -fa "$TAG" -m "Release $TAG"
+          git push --force origin "$TAG"
 
   build-release:
     name: Build Release Binaries
     needs: [test, detect-version, create-tag]
     if: always() && needs.test.result == 'success' && (needs.detect-version.outputs.is_new == 'true' || startsWith(github.ref, 'refs/tags/v'))
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: windows-latest
@@ -132,6 +136,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.22'
+          cache: false
 
       - name: Build Windows Binary with Resources
         if: matrix.goos == 'windows'
@@ -139,7 +144,12 @@ jobs:
         run: |
           if (Test-Path "tools/onescreen") { Set-Location "tools/onescreen" }
           go install github.com/akavel/rsrc@latest
-          rsrc -manifest app.manifest -ico icon.ico -o rsrc_windows_amd64.syso -arch amd64
+          $gopath = go env GOPATH
+          if (Test-Path "$gopath/bin/rsrc.exe") {
+            & "$gopath/bin/rsrc.exe" -manifest app.manifest -ico icon.ico -o rsrc_windows_amd64.syso -arch amd64
+          } else {
+            rsrc -manifest app.manifest -ico icon.ico -o rsrc_windows_amd64.syso -arch amd64
+          }
           $env:GOOS = "${{ matrix.goos }}"
           $env:GOARCH = "${{ matrix.goarch }}"
           go build -ldflags "-H windowsgui -s -w" -o "${{ matrix.artifact_name }}" .
@@ -151,6 +161,14 @@ jobs:
           if [ -d "tools/onescreen" ]; then cd tools/onescreen; fi
           export GOOS="${{ matrix.goos }}"
           export GOARCH="${{ matrix.goarch }}"
+          if [ "${{ matrix.goos }}" = "darwin" ]; then
+            export CGO_ENABLED=1
+            if [ "${{ matrix.goarch }}" = "amd64" ]; then
+              export CC="clang -arch x86_64"
+            else
+              export CC="clang -arch arm64"
+            fi
+          fi
           go build -ldflags "-s -w" -o "${{ matrix.artifact_name }}" .
           if [ -d "../../tools" ]; then cp "${{ matrix.artifact_name }}" ../../; fi
 
