@@ -103,7 +103,7 @@ func main() {
 	a.cfg = loadConfig(log)
 	a.sw = NewSwitcher(a.Config, log, a.onDdcProblem)
 
-	log.Printf("OneScreen %s 启动", version)
+	log.Printf("OneScreen %s 启动（界面语言 %s）", version, langName())
 	a.prepare()
 
 	systray.Run(a.onReady, a.onExit)

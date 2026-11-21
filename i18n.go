@@ -1,5 +1,10 @@
 package main
 
+import (
+	"os"
+	"strings"
+)
+
 // 只支持中英两种，启动时按系统语言定一次，换语言重启生效。
 // 命令行输出保持英文：终端按 GBK 解码 UTF-8 会乱码。
 
@@ -58,6 +63,15 @@ func t() *textSet {
 	if uiLang != nil {
 		return uiLang
 	}
+	// 调试用：ONESCREEN_LANG=en 可以在不改系统语言的情况下看英文界面
+	if v := os.Getenv("ONESCREEN_LANG"); v != "" {
+		if strings.HasPrefix(strings.ToLower(v), "en") {
+			uiLang = &textsEN
+		} else {
+			uiLang = &textsZH
+		}
+		return uiLang
+	}
 	proc := kernel32.NewProc("GetUserDefaultUILanguage")
 	r, _, _ := proc.Call()
 	// LANGID 低 10 位是主语言，0x04 = 中文
@@ -67,4 +81,12 @@ func t() *textSet {
 		uiLang = &textsEN
 	}
 	return uiLang
+}
+
+// langName 给日志用。
+func langName() string {
+	if t() == &textsZH {
+		return "zh"
+	}
+	return "en"
 }
