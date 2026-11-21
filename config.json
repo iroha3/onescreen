@@ -8,5 +8,10 @@
   "oink_dir": "C:\\Program Files\\Oink",
   "agent_path": "C:\\Program Files\\Oink\\oink-agent.exe",
   "autostart": false,
+  "inputs_cache": [
+    17,
+    18,
+    15
+  ],
   "machine": "DESKTOP-3QDPSFO"
 }
