@@ -4,17 +4,27 @@
 
 双击托盘 = 切到另一台。配合 [Oink](https://github.com/oinkvm/oink) 还能跟着鼠标焦点自动切。
 
-## 编译
+## 编译与跨平台
 
+### Windows
 ```bash
 # 换图标或清单时才需要重跑这一行（生成 PE 资源，exe 图标和现代控件清单靠它）
-rsrc -manifest app.manifest -ico icon.ico -o rsrc.syso -arch amd64
+rsrc -manifest app.manifest -ico icon.ico -o rsrc_windows_amd64.syso -arch amd64
 
 go build -ldflags "-H windowsgui -s -w" -o onescreen.exe .
 ```
 
-`-H windowsgui` 去掉控制台窗口，`-s -w` 去掉符号表（约 4MB）。
-exe 的图标来自 `rsrc.syso`，托盘图标来自 `go:embed tray.ico`。
+### Linux (Ubuntu / Debian / Fedora)
+```bash
+go build -ldflags "-s -w" -o onescreen .
+```
+Linux 下通过 `ddcutil` 控制显示器（`sudo apt install ddcutil`），关于弹窗原生支持 `zenity` 与 `kdialog`。
+
+### macOS (Apple Silicon / Intel)
+```bash
+go build -ldflags "-s -w" -o onescreen .
+```
+macOS 默认支持 AppleScript 对话框与 LaunchAgents 自启；DDC 控制支持 `m1ddc`（Apple Silicon 首选：`brew install m1ddc`）或 `ddcctl`（Intel：`brew install ddcctl`）。
 
 ## 用法
 

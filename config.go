@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sync"
 	"time"
 )
@@ -53,7 +54,16 @@ func dataDir() string {
 		base := os.Getenv("APPDATA")
 		if base == "" {
 			home, _ := os.UserHomeDir()
-			base = filepath.Join(home, "AppData", "Roaming")
+			if runtime.GOOS == "darwin" {
+				base = filepath.Join(home, "Library", "Application Support")
+			} else if runtime.GOOS == "linux" {
+				base = os.Getenv("XDG_CONFIG_HOME")
+				if base == "" {
+					base = filepath.Join(home, ".config")
+				}
+			} else {
+				base = filepath.Join(home, "AppData", "Roaming")
+			}
 		}
 		dirVal = filepath.Join(base, "OneScreen")
 		_ = os.MkdirAll(dirVal, 0o755)

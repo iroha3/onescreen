@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -101,7 +102,11 @@ func (a *app) prepare() {
 		a.oinkDir = oink.FindInstall()
 		if a.oinkDir != "" {
 			cfg.OinkDir = a.oinkDir
-			cfg.AgentPath = filepath.Join(a.oinkDir, "oink-agent.exe")
+			exeName := "oink-agent"
+			if runtime.GOOS == "windows" {
+				exeName = "oink-agent.exe"
+			}
+			cfg.AgentPath = filepath.Join(a.oinkDir, exeName)
 			a.setConfig(cfg)
 		}
 	}
