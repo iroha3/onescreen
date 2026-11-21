@@ -17,29 +17,31 @@ a{color:inherit;text-decoration:none}
 :focus-visible{outline:2px solid var(--a);outline-offset:3px;border-radius:6px}
 .w{width:min(1120px,100% - 40px);margin-inline:auto}
 nav{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 84%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px)}
-nav .w{display:flex;align-items:center;gap:26px;height:60px}
+nav .w{display:flex;align-items:center;gap:26px;height:56px}
 .logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;letter-spacing:-.01em}
-.logo svg{width:30px;height:30px}
+.logo svg{width:28px;height:28px}
 .links{display:flex;gap:24px;margin-left:auto;color:var(--mute);font-size:14.5px}
 .links a:hover{color:var(--ink)}
-.ib{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:none;color:var(--ink);cursor:pointer;font-size:16px}
-.btn{display:inline-flex;align-items:center;padding:12px 24px;border-radius:10px;font-weight:700;border:1.5px solid var(--ink);color:var(--ink);background:none;transition:transform .15s}
+.ib{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:none;color:var(--ink);cursor:pointer;font-size:15px}
+.btn{display:inline-flex;align-items:center;padding:10px 20px;border-radius:10px;font-weight:700;border:1.5px solid var(--ink);color:var(--ink);background:none;transition:transform .15s}
 .btn:hover{transform:translateY(-2px)}
 .btn.p{background:var(--btn);color:var(--btn-ink)}
-.hero{padding:72px 0 8px;display:grid;grid-template-columns:1.3fr 1fr;gap:40px;align-items:end}
-h1{font-size:clamp(44px,8vw,92px);line-height:1.05;letter-spacing:-.04em;font-weight:900}
-.hs p{color:var(--mute);font-size:17px;max-width:30em}
-.cta{display:flex;flex-wrap:wrap;gap:12px;margin:24px 0 14px}
-.hs small{color:var(--mute);font-size:13.5px}
+
+/* Hero section tuned for first-screen viewport fit */
+.hero{padding:42px 0 0;display:grid;grid-template-columns:1.3fr 1fr;gap:36px;align-items:end}
+h1{font-size:clamp(36px,6vw,76px);line-height:1.06;letter-spacing:-.04em;font-weight:900}
+.hs p{color:var(--mute);font-size:16.5px;max-width:30em}
+.cta{display:flex;flex-wrap:wrap;gap:12px;margin:20px 0 10px}
+.hs small{color:var(--mute);font-size:13px}
 
 /* demo stage */
-.stage{display:grid;grid-template-areas:"a cl m cr b";grid-template-columns:auto minmax(20px,1fr) minmax(0,3.2fr) minmax(20px,1fr) auto;align-items:center;margin-top:52px}
+.stage{display:grid;grid-template-areas:"a cl m cr b";grid-template-columns:auto minmax(16px,1fr) minmax(0,3.2fr) minmax(16px,1fr) auto;align-items:center;margin:28px 0 36px}
 #hA{grid-area:a;--c:var(--a)}#hB{grid-area:b;--c:var(--b)}.mon{grid-area:m;min-width:0}.cab.l{grid-area:cl;--c:var(--a)}.cab.r{grid-area:cr;--c:var(--b)}
-.host{width:134px;padding:16px 10px 14px;text-align:center;border:1.5px solid var(--line);border-radius:16px;background:var(--card);color:var(--mute);transition:border-color .3s,color .3s}
-.host svg{width:52px;height:52px}
-.host b{display:block;color:var(--ink);margin-top:4px}
-.host code{font:12.5px var(--mono)}
-.host .s{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px;font-size:12.5px}
+.host{width:130px;padding:14px 10px 12px;text-align:center;border:1.5px solid var(--line);border-radius:16px;background:var(--card);color:var(--mute);transition:border-color .3s,color .3s}
+.host svg{width:46px;height:46px}
+.host b{display:block;color:var(--ink);margin-top:4px;font-size:15px}
+.host code{font:12px var(--mono)}
+.host .s{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:6px;font-size:12px}
 .host .s::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--line)}
 .host .s::after{content:"待机"}
 .stage[data-on=A] #hA,.stage[data-on=B] #hB{border-color:var(--c);color:var(--c)}
@@ -59,26 +61,21 @@ h1{font-size:clamp(44px,8vw,92px);line-height:1.05;letter-spacing:-.04em;font-we
 
 /* authentic taskbar / menubar */
 .tb{position:absolute;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:0 12px;background:rgba(18,20,24,0.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:rgba(255,255,255,0.9);z-index:6}
-.a .tb{bottom:0;height:28px;border-top:1px solid rgba(255,255,255,0.12)}
-.b .tb{top:0;height:24px;border-bottom:1px solid rgba(255,255,255,0.12)}
+.a .tb{bottom:0;height:26px;border-top:1px solid rgba(255,255,255,0.12)}
+.b .tb{top:0;height:22px;border-bottom:1px solid rgba(255,255,255,0.12)}
 .tb-left{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600}
-.win-start{width:16px;height:16px;display:grid;grid-template-columns:1fr 1fr;gap:2px}
+.win-start{width:14px;height:14px;display:grid;grid-template-columns:1fr 1fr;gap:2px}
 .win-start span{background:#00adef;border-radius:1px}
 .mac-apple{font-size:13px;line-height:1}
-.mac-brand{font-size:11.5px;font-weight:700;letter-spacing:-.01em}
+.mac-brand{font-size:11px;font-weight:700;letter-spacing:-.01em}
 
 /* tray on virtual taskbar */
-.tb-tray{display:flex;align-items:center;gap:8px;position:relative}
-.tray-item{display:flex;align-items:center;gap:4px;padding:2px 6px;border-radius:5px;background:rgba(255,255,255,0.12);cursor:pointer;transition:background .15s,transform .1s}
-.tray-item:hover{background:rgba(255,255,255,0.24)}
+.tb-tray{display:flex;align-items:center;gap:8px}
+.tray-item{display:flex;align-items:center;gap:4px;padding:2px 6px;border-radius:4px;background:rgba(255,255,255,0.14);cursor:pointer;transition:background .15s,transform .1s}
+.tray-item:hover{background:rgba(255,255,255,0.3)}
 .tray-item:active{transform:scale(.92)}
-.tray-item svg{width:14px;height:14px;color:#fff}
-.tb-time{font:11.5px var(--mono);opacity:.85}
-
-/* hover tooltip */
-.tray-item .tip{position:absolute;bottom:calc(100% + 8px);right:0;padding:4px 9px;border-radius:6px;background:rgba(15,18,24,0.92);color:#fff;font:600 11.5px var(--sans);white-space:nowrap;pointer-events:none;opacity:0;transform:translateY(4px);transition:all .2s;box-shadow:0 8px 18px rgba(0,0,0,.4);border:1px solid rgba(255,255,255,0.15)}
-.b .tray-item .tip{bottom:auto;top:calc(100% + 8px)}
-.tray-item:hover .tip{opacity:1;transform:translateY(0)}
+.tray-item svg{width:13px;height:13px;color:#fff}
+.tb-time{font:11px var(--mono);opacity:.85}
 
 /* desktop window */
 .win{position:absolute;left:12%;top:20%;width:50%;height:46%;border-radius:8px;background:rgba(255,255,255,.9);box-shadow:0 12px 30px rgba(0,0,0,.3)}
@@ -87,46 +84,29 @@ h1{font-size:clamp(44px,8vw,92px);line-height:1.05;letter-spacing:-.04em;font-we
 .scr h3{position:absolute;right:6%;bottom:14%;color:#fff;font-size:clamp(18px,4.2vw,44px);font-weight:900;letter-spacing:-.03em}
 .b h3{bottom:auto;top:16%}
 .bl{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none;z-index:10}
-.screen.bk .bl{animation:bk .45s}
-@keyframes bk{0%,60%{opacity:1}100%{opacity:0}}
+.screen.bk .bl{animation:bk .35s}
+@keyframes bk{0%,65%{opacity:1}100%{opacity:0}}
 
-/* edge hover & 400ms charge progress */
-.edge{position:absolute;top:0;bottom:0;width:15%;opacity:0;transition:opacity .3s;pointer-events:none;z-index:4;display:flex;align-items:center;justify-content:center}
-.edge.l{left:0;background:linear-gradient(90deg,rgba(255,255,255,.32),transparent)}
-.edge.r{right:0;background:linear-gradient(270deg,rgba(255,255,255,.32),transparent)}
-.edge span{position:absolute;left:0;right:0;bottom:0;height:0;background:linear-gradient(0deg,var(--a),rgba(56,189,248,.85))}
-.edge.l span{background:linear-gradient(0deg,var(--b),rgba(251,191,36,.85))}
-.edge.arm span{height:100%;transition:height .4s linear}
+/* edge hover & fluid charge animation */
+.edge{position:absolute;top:0;bottom:0;width:12%;opacity:0;transition:opacity .25s;pointer-events:none;z-index:4;display:flex;align-items:center;justify-content:center}
+.edge.l{left:0;background:linear-gradient(90deg,rgba(255,255,255,.28),transparent)}
+.edge.r{right:0;background:linear-gradient(270deg,rgba(255,255,255,.28),transparent)}
+.edge span{position:absolute;left:0;right:0;bottom:0;height:0;background:linear-gradient(0deg,var(--a),rgba(56,189,248,.9));transition:height .35s linear}
+.edge.l span{background:linear-gradient(0deg,var(--b),rgba(251,191,36,.9))}
+.edge.arm span{height:100%}
 .stage.oink[data-on=A] .edge.r,.stage.oink[data-on=B] .edge.l{opacity:1}
 
-/* edge indicator badge */
-.edge-badge{position:relative;z-index:2;display:flex;align-items:center;gap:4px;padding:4px 8px;border-radius:6px;background:rgba(10,13,18,0.78);color:#fff;font:700 11px var(--mono);border:1px solid rgba(255,255,255,0.22);box-shadow:0 4px 12px rgba(0,0,0,.35);transition:transform .2s,background .2s}
-@keyframes pulse-edge{0%,100%{transform:scale(1);box-shadow:0 0 0 rgba(255,255,255,0)}50%{transform:scale(1.06);box-shadow:0 0 14px rgba(255,255,255,0.35)}}
-.edge-badge{animation:pulse-edge 2s infinite ease-in-out}
-.edge.arm .edge-badge{background:var(--ink);color:#fff;border-color:currentColor}
+/* minimalist pulse arrow */
+.edge-badge{position:relative;z-index:2;display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:rgba(10,13,18,0.7);color:#fff;font:700 12px var(--sans);border:1px solid rgba(255,255,255,0.25);box-shadow:0 2px 8px rgba(0,0,0,.35);animation:pulse-edge 2s infinite ease-in-out}
+@keyframes pulse-edge{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
 
 /* cursor */
-.fc{position:absolute;left:30%;top:55%;width:20px;opacity:0;pointer-events:none;z-index:8;transition:left 1.2s cubic-bezier(.4,0,.2,1),top 1.2s cubic-bezier(.4,0,.2,1),opacity .3s;filter:drop-shadow(0 2px 4px rgba(0,0,0,.45))}
+.fc{position:absolute;left:30%;top:55%;width:20px;opacity:0;pointer-events:none;z-index:8;transition:left .7s cubic-bezier(.25,1,.5,1),top .7s cubic-bezier(.25,1,.5,1),opacity .2s;filter:drop-shadow(0 2px 4px rgba(0,0,0,.45))}
 .stand{width:20%;height:14px;margin:0 auto;background:#1d2024}
 .base{width:36%;height:6px;margin:0 auto;border-radius:6px;background:#2b2f35}
 
-/* controls below stage */
-.ctl{display:flex;flex-wrap:wrap;gap:14px 20px;align-items:center;justify-content:space-between;margin-top:22px;padding:10px 14px 10px 18px;border:1px solid var(--line);border-radius:14px;background:var(--card)}
-.ctl-left{display:flex;align-items:center;gap:12px}
-.mode-pill{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;font:700 12.5px var(--sans);border:1px solid var(--line);background:var(--code);color:var(--ink);cursor:pointer;transition:all .15s}
-.mode-pill::before{content:"";width:7px;height:7px;border-radius:50%;background:#22c55e}
-.mode-pill.manual::before{background:#f59e0b}
-.mode-pill:hover{border-color:var(--mute)}
-.ctl-tip{font-size:13.5px;color:var(--mute)}
-.sw{display:flex;align-items:center;gap:10px;border:0;background:none;color:var(--ink);font:inherit;font-size:14.5px;cursor:pointer}
-.sw i{width:42px;height:24px;border-radius:12px;background:var(--line);position:relative;transition:background .2s}
-.sw i::after{content:"";position:absolute;left:3px;top:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .2s}
-.sw[aria-checked=true] i{background:var(--a)}
-.sw[aria-checked=true] i::after{transform:translateX(18px)}
-.log{margin-top:12px;color:var(--mute);font-size:14px;min-height:1.7em}
-
 /* sections */
-.sec{padding:92px 0 0}
+.sec{padding:80px 0 0}
 h2{font-size:clamp(28px,4.4vw,44px);letter-spacing:-.03em;line-height:1.2;font-weight:850}
 .lead{color:var(--mute);margin:10px 0 36px;max-width:34em}
 .tw{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--card)}
@@ -181,13 +161,13 @@ summary::-webkit-details-marker{display:none}
 summary::after{content:"+";font-weight:400;font-size:26px;line-height:1;transition:transform .2s}
 details[open] summary::after{transform:rotate(45deg)}
 details p{margin-top:10px;color:var(--mute)}
-footer{margin-top:110px;border-top:1px solid var(--line);padding:36px 0 calc(48px + env(safe-area-inset-bottom,0px));color:var(--mute);font-size:14px}
+footer{margin-top:100px;border-top:1px solid var(--line);padding:36px 0 calc(48px + env(safe-area-inset-bottom,0px));color:var(--mute);font-size:14px}
 footer .w{display:flex;flex-wrap:wrap;gap:12px 28px;justify-content:space-between;align-items:center}
 footer a{text-decoration:underline;text-underline-offset:3px}
 @media (max-width:860px){
 .links{display:none}nav .w{justify-content:space-between}
-.hero{grid-template-columns:1fr;padding-top:48px;gap:24px}
-.stage{grid-template-areas:"a b" "m m";grid-template-columns:1fr 1fr;gap:16px;margin-top:36px}
+.hero{grid-template-columns:1fr;padding-top:40px;gap:20px}
+.stage{grid-template-areas:"a b" "m m";grid-template-columns:1fr 1fr;gap:16px;margin:24px 0 28px}
 .host{width:auto}.cab{display:none}
 .t,.t.w4,.t.w2{grid-column:span 6}
 .steps>li{grid-template-columns:1fr}.steps>li::before{font-size:40px}
@@ -226,7 +206,7 @@ footer a{text-decoration:underline;text-underline-offset:3px}
     <div class="cab l"></div><div class="cab r"></div>
     <div class="host" id="hB"><svg><use href="#lp"/></svg><b>主机 B</b><code>DP 1</code><div class="s"></div></div>
     <div class="mon">
-      <div class="screen" id="screen" title="移动鼠标到边缘停留 400ms，或双击系统托盘图标切屏">
+      <div class="screen" id="screen">
         <!-- Windows Desktop -->
         <div class="scr a">
           <div class="win"></div>
@@ -236,7 +216,6 @@ footer a{text-decoration:underline;text-underline-offset:3px}
             <div class="tb-tray">
               <div class="tray-item" id="trayWin">
                 <svg><use href="#lg"/></svg>
-                <div class="tip">OneScreen · 双击切到主机 B</div>
               </div>
               <span class="tb-time">10:42</span>
             </div>
@@ -250,7 +229,6 @@ footer a{text-decoration:underline;text-underline-offset:3px}
             <div class="tb-tray">
               <div class="tray-item" id="trayMac">
                 <svg><use href="#lg"/></svg>
-                <div class="tip">OneScreen · 双击切到主机 A</div>
               </div>
               <span class="tb-time">10:42</span>
             </div>
@@ -259,9 +237,9 @@ footer a{text-decoration:underline;text-underline-offset:3px}
           <h3>macOS</h3>
         </div>
 
-        <!-- Edges with 400ms Charge Bar & Visual Hint Badges -->
-        <div class="edge l"><span></span><div class="edge-badge">◀ 400ms</div></div>
-        <div class="edge r"><span></span><div class="edge-badge">➔ 400ms</div></div>
+        <!-- Minimal Edge Charge Indicators -->
+        <div class="edge l"><span></span><div class="edge-badge">◀</div></div>
+        <div class="edge r"><span></span><div class="edge-badge">➔</div></div>
 
         <!-- Virtual Cursor -->
         <svg class="fc" id="fc" viewBox="0 0 20 24"><path d="M2 2l15 9-6.5 1.5L7 19z" fill="#fff" stroke="#000" stroke-width="1.5" stroke-linejoin="round"/></svg>
@@ -270,16 +248,6 @@ footer a{text-decoration:underline;text-underline-offset:3px}
       <div class="stand"></div><div class="base"></div>
     </div>
   </div>
-
-  <!-- Controls below screen -->
-  <div class="ctl">
-    <div class="ctl-left">
-      <button class="mode-pill" id="modeBtn" title="点击切换自动演示与手动体验模式">自动演示中</button>
-      <span class="ctl-tip">可双击屏幕内托盘图标直接切屏</span>
-    </div>
-    <button class="sw" id="oink" role="switch" aria-checked="true"><i></i>随 Oink 自动切屏</button>
-  </div>
-  <p class="log" id="log" aria-live="polite">当前：主机 A · HDMI 1。鼠标滑向屏幕右侧边缘停留 400ms 即可切屏。</p>
 </section>
 
 <section class="w sec" id="compare">
@@ -340,103 +308,63 @@ footer a{text-decoration:underline;text-underline-offset:3px}
 </div></footer>
 
 <script>
-const $=s=>document.querySelector(s),st=$('#stage'),sc=$('#screen'),lg=$('#log'),fc=$('#fc'),ok=$('#oink'),modeBtn=$('#modeBtn');
+const $=s=>document.querySelector(s),st=$('#stage'),sc=$('#screen'),fc=$('#fc');
 const N={A:'主机 A · HDMI 1',B:'主机 B · DP 1'},sleep=ms=>new Promise(r=>setTimeout(r,ms));
-let cur='A',oink=true,cool=false,t=null,lt=0;
-let isAuto=true,idleTimer=null,loopSeq=0;
+let cur='A',cool=false,t=null,lt=0;
+let isAuto=true,loopSeq=0;
 
-const log=m=>lg.textContent=m;
 function clr(){clearTimeout(t);t=null;document.querySelectorAll('.edge').forEach(e=>e.classList.remove('arm'))}
 
 function sw(to,why,force){
-  if(!force&&cool){log('冷却中：1000ms 内不会重复下发指令。');return false}
-  if(to===cur){log('已经是 '+N[to]+'。');return false}
-  cool=true;setTimeout(()=>cool=false,1000);
+  if(!force&&cool)return false;
+  if(to===cur)return false;
+  cool=true;setTimeout(()=>cool=false,700);
   cur=to;st.dataset.on=to;
   sc.classList.remove('bk');void sc.offsetWidth;sc.classList.add('bk');
-  log(why+'，输入源切换到 '+N[to]+'。');
   return true;
 }
 const other=()=>cur==='A'?'B':'A';
-
-/* Switch mode */
-function setMode(auto){
-  isAuto=auto;
-  modeBtn.textContent=auto?'自动演示中':'手动体验中';
-  modeBtn.classList.toggle('manual',!auto);
-  if(!auto){
-    fc.style.opacity=0;
-    clr();
-  }
-}
-
-modeBtn.addEventListener('click',()=>{
-  setMode(!isAuto);
-  if(isAuto){
-    runAutoLoop();
-  }else{
-    log('已切换为手动试玩：将鼠标移到屏幕边缘停留 400ms，或双击系统托盘图标。');
-  }
-});
-
-function resetIdleTimer(){
-  clearTimeout(idleTimer);
-  idleTimer=setTimeout(()=>{
-    if(!isAuto){
-      setMode(true);
-      runAutoLoop();
-    }
-  },5000);
-}
 
 /* Authentic virtual tray double-click */
 function bindTray(el,targetHost){
   if(!el)return;
   const doSwitch=()=>{
-    setMode(false);
-    resetIdleTimer();
-    sw(targetHost,'双击虚拟系统托盘图标');
+    isAuto=false;
+    sw(targetHost,'双击虚拟托盘');
   };
   el.addEventListener('dblclick',e=>{e.stopPropagation();doSwitch()});
   el.addEventListener('click',e=>{
     e.stopPropagation();
     const n=Date.now();
-    if(n-lt<400){lt=0;doSwitch()}else{lt=n;log('再点一次托盘图标，完成双击切屏。')}
+    if(n-lt<400){lt=0;doSwitch()}else{lt=n}
   });
 }
 bindTray($('#trayWin'),'B');
 bindTray($('#trayMac'),'A');
 
-/* User real mouse manual interaction */
+/* User real mouse manual interaction: mouse in = manual, mouse out = auto */
 sc.addEventListener('pointerenter',()=>{
-  setMode(false);
-  resetIdleTimer();
-  log('已接管：移动光标至边缘停留 400ms，或双击右下角托盘图标切屏。');
+  isAuto=false;
+  fc.style.opacity=0;
+  clr();
 });
 
 sc.addEventListener('pointermove',e=>{
   if(isAuto)return;
-  resetIdleTimer();
-  if(!oink)return;
   const r=sc.getBoundingClientRect(),x=(e.clientX-r.left)/r.width;
   const side=cur==='A'?'r':'l',hit=cur==='A'?x>.88:x<.12;
   if(hit&&!t){
     $('.edge.'+side).classList.add('arm');
-    t=setTimeout(()=>{clr();sw(other(),'鼠标在边缘停留了 400ms')},400);
+    t=setTimeout(()=>{clr();sw(other(),'手动切屏')},350);
   }else if(!hit&&t){
     clr();
-    log('快速划过未达到 400ms，防抖生效未切屏。');
   }
 });
 
 sc.addEventListener('pointerleave',()=>{
   clr();
-  if(!isAuto)resetIdleTimer();
-});
-
-ok.addEventListener('click',()=>{
-  oink=!oink;ok.setAttribute('aria-checked',oink);st.classList.toggle('oink',oink);clr();
-  log(oink?'已开启随 Oink 自动切屏：鼠标停留边缘 400ms 即触发。':'已关闭自动切屏，仍可双击托盘图标手动切换。');
+  isAuto=true;
+  runAutoLoop();
 });
 
 /* hotkey */
@@ -450,67 +378,51 @@ addEventListener('keyup',e=>{const i=idx(e);if(i>-1)ks[i].classList.remove('on')
 addEventListener('blur',()=>ks.forEach(k=>k.classList.remove('on')));
 $('#keys').addEventListener('click',()=>{
   ks.forEach(k=>k.classList.add('on'));setTimeout(()=>ks.forEach(k=>k.classList.remove('on')),250);
-  if(!sw('A','强制切回热键',true))log('已经在本机 '+N.A+'。先切到主机 B，再试一次。');
+  sw('A','强制切回热键',true);
 });
 
-/* Continuous cinematic auto-pilot loop */
+/* Continuous cinematic auto-pilot loop (~3 seconds complete round-trip) */
 async function runAutoLoop(){
   const mySeq=++loopSeq;
   if(matchMedia('(prefers-reduced-motion:reduce)').matches){isAuto=false;return}
 
   while(isAuto&&mySeq===loopSeq){
-    if(!oink){await sleep(800);continue}
-
     if(cur==='A'){
-      // Glide to right edge
+      // 1. Cursor glides to right edge smoothly (0.7s)
       fc.style.opacity=1;
-      fc.style.transition='left 1.1s cubic-bezier(.4,0,.2,1), top 1.1s cubic-bezier(.4,0,.2,1), opacity .3s';
-      fc.style.left='42%';fc.style.top='54%';
-      log('演示：Oink 将光标平滑带向对端屏幕右边缘…');
-      await sleep(1000);if(!isAuto||mySeq!==loopSeq||cur!=='A')break;
+      fc.style.transition='left .7s cubic-bezier(.25,1,.5,1), top .7s cubic-bezier(.25,1,.5,1), opacity .2s';
+      fc.style.left='95%';fc.style.top='50%';
+      await sleep(700);if(!isAuto||mySeq!==loopSeq||cur!=='A')break;
 
-      fc.style.left='93%';fc.style.top='50%';
-      await sleep(1100);if(!isAuto||mySeq!==loopSeq||cur!=='A')break;
-
-      // Charge 400ms at edge
-      log('光标悬停边缘：400ms 缓冲防抖充能中…');
+      // 2. Immediate responsive flash on arrival, no idle hang
       $('.edge.r').classList.add('arm');
-      await sleep(400);clr();if(!isAuto||mySeq!==loopSeq||cur!=='A')break;
+      await sleep(100);clr();if(!isAuto||mySeq!==loopSeq||cur!=='A')break;
 
-      // Switch to B
-      sw('B','鼠标在边缘停留 400ms 自动切屏');
-      fc.style.transition='none';fc.style.left='5%';fc.style.top='50%';
+      // 3. Switch to Host B
+      sw('B','自动切屏');
+      fc.style.transition='none';fc.style.left='6%';fc.style.top='50%';
       void fc.offsetWidth;
-      fc.style.transition='left 1.1s cubic-bezier(.4,0,.2,1), top 1.1s cubic-bezier(.4,0,.2,1), opacity .3s';
 
-      await sleep(80);if(!isAuto||mySeq!==loopSeq)break;
-      fc.style.left='45%';fc.style.top='48%';
-      await sleep(2200);if(!isAuto||mySeq!==loopSeq)break;
+      // 4. Sits on Host B (0.85s)
+      await sleep(850);if(!isAuto||mySeq!==loopSeq||cur!=='B')break;
     }else{
-      // Glide to left edge
+      // 5. Cursor glides to left edge smoothly (0.7s)
       fc.style.opacity=1;
-      fc.style.transition='left 1.1s cubic-bezier(.4,0,.2,1), top 1.1s cubic-bezier(.4,0,.2,1), opacity .3s';
-      fc.style.left='45%';fc.style.top='48%';
-      log('演示：鼠标在主机 B 滑向左侧边缘，准备切回主机 A…');
-      await sleep(1000);if(!isAuto||mySeq!==loopSeq||cur!=='B')break;
+      fc.style.transition='left .7s cubic-bezier(.25,1,.5,1), top .7s cubic-bezier(.25,1,.5,1), opacity .2s';
+      fc.style.left='4%';fc.style.top='50%';
+      await sleep(700);if(!isAuto||mySeq!==loopSeq||cur!=='B')break;
 
-      fc.style.left='5%';fc.style.top='50%';
-      await sleep(1100);if(!isAuto||mySeq!==loopSeq||cur!=='B')break;
-
-      // Charge 400ms at edge
-      log('光标悬停边缘：400ms 缓冲防抖充能中…');
+      // 6. Immediate responsive flash on arrival, no idle hang
       $('.edge.l').classList.add('arm');
-      await sleep(400);clr();if(!isAuto||mySeq!==loopSeq||cur!=='B')break;
+      await sleep(100);clr();if(!isAuto||mySeq!==loopSeq||cur!=='B')break;
 
-      // Switch to A
-      sw('A','鼠标在边缘停留 400ms 自动切屏');
-      fc.style.transition='none';fc.style.left='93%';fc.style.top='50%';
+      // 7. Switch to Host A
+      sw('A','自动切屏');
+      fc.style.transition='none';fc.style.left='94%';fc.style.top='50%';
       void fc.offsetWidth;
-      fc.style.transition='left 1.1s cubic-bezier(.4,0,.2,1), top 1.1s cubic-bezier(.4,0,.2,1), opacity .3s';
 
-      await sleep(80);if(!isAuto||mySeq!==loopSeq)break;
-      fc.style.left='42%';fc.style.top='54%';
-      await sleep(2200);if(!isAuto||mySeq!==loopSeq)break;
+      // 8. Sits on Host A (0.85s)
+      await sleep(850);if(!isAuto||mySeq!==loopSeq||cur!=='A')break;
     }
   }
 }
