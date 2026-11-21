@@ -110,10 +110,11 @@ func (a *app) prepare() {
 
 	// 配置可能跟着 exe 从另一台机器拷过来：靠机器名认出来，两个口对调。
 	if host, err := os.Hostname(); err == nil && cfg.Machine != "" && cfg.Machine != host {
+		old := cfg.Machine
 		cfg.LocalInput, cfg.PeerInput = cfg.PeerInput, cfg.LocalInput
 		cfg.Machine = host
 		a.setConfig(cfg)
-		a.log.Printf("[config] 检测到配置来自 %s，本机口与对端口已对调", cfg.Machine)
+		a.log.Printf("[config] 配置来自 %s，本机口与对端口已对调", old)
 	}
 	if cfg.Machine == "" {
 		host, _ := os.Hostname()

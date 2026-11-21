@@ -1,0 +1,12 @@
+{
+  "monitor": "0",
+  "local_input": 15,
+  "peer_input": 18,
+  "auto_switch": true,
+  "delay_ms": 600,
+  "cooldown_ms": 1000,
+  "oink_dir": "C:\\Program Files\\Oink",
+  "agent_path": "C:\\Program Files\\Oink\\oink-agent.exe",
+  "autostart": false,
+  "machine": "DESKTOP-3QDPSFO"
+}
