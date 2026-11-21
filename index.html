@@ -17,31 +17,29 @@ a{color:inherit;text-decoration:none}
 :focus-visible{outline:2px solid var(--a);outline-offset:3px;border-radius:6px}
 .w{width:min(1120px,100% - 40px);margin-inline:auto}
 nav{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 84%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px)}
-nav .w{display:flex;align-items:center;gap:26px;height:56px}
+nav .w{display:flex;align-items:center;gap:26px;height:60px}
 .logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;letter-spacing:-.01em}
-.logo svg{width:28px;height:28px}
+.logo svg{width:30px;height:30px}
 .links{display:flex;gap:24px;margin-left:auto;color:var(--mute);font-size:14.5px}
 .links a:hover{color:var(--ink)}
-.ib{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:none;color:var(--ink);cursor:pointer;font-size:15px}
-.btn{display:inline-flex;align-items:center;padding:10px 20px;border-radius:10px;font-weight:700;border:1.5px solid var(--ink);color:var(--ink);background:none;transition:transform .15s}
+.ib{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:none;color:var(--ink);cursor:pointer;font-size:16px}
+.btn{display:inline-flex;align-items:center;padding:12px 24px;border-radius:10px;font-weight:700;border:1.5px solid var(--ink);color:var(--ink);background:none;transition:transform .15s}
 .btn:hover{transform:translateY(-2px)}
 .btn.p{background:var(--btn);color:var(--btn-ink)}
-
-/* Hero section tuned for first-screen viewport fit */
-.hero{padding:42px 0 0;display:grid;grid-template-columns:1.3fr 1fr;gap:36px;align-items:end}
-h1{font-size:clamp(36px,6vw,76px);line-height:1.06;letter-spacing:-.04em;font-weight:900}
-.hs p{color:var(--mute);font-size:16.5px;max-width:30em}
-.cta{display:flex;flex-wrap:wrap;gap:12px;margin:20px 0 10px}
-.hs small{color:var(--mute);font-size:13px}
+.hero{padding:48px 0 0;display:grid;grid-template-columns:1.3fr 1fr;gap:36px;align-items:end}
+h1{font-size:clamp(44px,8vw,92px);line-height:1.05;letter-spacing:-.04em;font-weight:900}
+.hs p{color:var(--mute);font-size:17px;max-width:30em}
+.cta{display:flex;flex-wrap:wrap;gap:12px;margin:24px 0 14px}
+.hs small{color:var(--mute);font-size:13.5px}
 
 /* demo stage */
-.stage{display:grid;grid-template-areas:"a cl m cr b";grid-template-columns:auto minmax(16px,1fr) minmax(0,3.2fr) minmax(16px,1fr) auto;align-items:center;margin:28px 0 36px}
+.stage{display:grid;grid-template-areas:"a cl m cr b";grid-template-columns:auto minmax(20px,1fr) minmax(0,3.2fr) minmax(20px,1fr) auto;align-items:center;margin-top:28px;margin-bottom:48px}
 #hA{grid-area:a;--c:var(--a)}#hB{grid-area:b;--c:var(--b)}.mon{grid-area:m;min-width:0}.cab.l{grid-area:cl;--c:var(--a)}.cab.r{grid-area:cr;--c:var(--b)}
-.host{width:130px;padding:14px 10px 12px;text-align:center;border:1.5px solid var(--line);border-radius:16px;background:var(--card);color:var(--mute);transition:border-color .3s,color .3s}
-.host svg{width:46px;height:46px}
-.host b{display:block;color:var(--ink);margin-top:4px;font-size:15px}
-.host code{font:12px var(--mono)}
-.host .s{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:6px;font-size:12px}
+.host{width:134px;padding:16px 10px 14px;text-align:center;border:1.5px solid var(--line);border-radius:16px;background:var(--card);color:var(--mute);transition:border-color .3s,color .3s}
+.host svg{width:52px;height:52px}
+.host b{display:block;color:var(--ink);margin-top:4px}
+.host code{font:12.5px var(--mono)}
+.host .s{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px;font-size:12.5px}
 .host .s::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--line)}
 .host .s::after{content:"待机"}
 .stage[data-on=A] #hA,.stage[data-on=B] #hB{border-color:var(--c);color:var(--c)}
@@ -61,21 +59,26 @@ h1{font-size:clamp(36px,6vw,76px);line-height:1.06;letter-spacing:-.04em;font-we
 
 /* authentic taskbar / menubar */
 .tb{position:absolute;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:0 12px;background:rgba(18,20,24,0.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:rgba(255,255,255,0.9);z-index:6}
-.a .tb{bottom:0;height:26px;border-top:1px solid rgba(255,255,255,0.12)}
-.b .tb{top:0;height:22px;border-bottom:1px solid rgba(255,255,255,0.12)}
+.a .tb{bottom:0;height:28px;border-top:1px solid rgba(255,255,255,0.12)}
+.b .tb{top:0;height:24px;border-bottom:1px solid rgba(255,255,255,0.12)}
 .tb-left{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600}
-.win-start{width:14px;height:14px;display:grid;grid-template-columns:1fr 1fr;gap:2px}
+.win-start{width:16px;height:16px;display:grid;grid-template-columns:1fr 1fr;gap:2px}
 .win-start span{background:#00adef;border-radius:1px}
 .mac-apple{font-size:13px;line-height:1}
-.mac-brand{font-size:11px;font-weight:700;letter-spacing:-.01em}
+.mac-brand{font-size:11.5px;font-weight:700;letter-spacing:-.01em}
 
 /* tray on virtual taskbar */
-.tb-tray{display:flex;align-items:center;gap:8px}
-.tray-item{display:flex;align-items:center;gap:4px;padding:2px 6px;border-radius:4px;background:rgba(255,255,255,0.14);cursor:pointer;transition:background .15s,transform .1s}
-.tray-item:hover{background:rgba(255,255,255,0.3)}
+.tb-tray{display:flex;align-items:center;gap:8px;position:relative}
+.tray-item{display:flex;align-items:center;gap:4px;padding:2px 6px;border-radius:5px;background:rgba(255,255,255,0.12);cursor:pointer;transition:background .15s,transform .1s;position:relative}
+.tray-item:hover{background:rgba(255,255,255,0.24)}
 .tray-item:active{transform:scale(.92)}
-.tray-item svg{width:13px;height:13px;color:#fff}
-.tb-time{font:11px var(--mono);opacity:.85}
+.tray-item svg{width:14px;height:14px;color:#fff}
+.tb-time{font:11.5px var(--mono);opacity:.85}
+
+/* custom hover tooltip */
+.tray-item .tip{position:absolute;bottom:calc(100% + 8px);right:0;padding:4px 9px;border-radius:6px;background:rgba(15,18,24,0.92);color:#fff;font:600 11.5px var(--sans);white-space:nowrap;pointer-events:none;opacity:0;transform:translateY(4px);transition:all .2s;box-shadow:0 8px 18px rgba(0,0,0,.4);border:1px solid rgba(255,255,255,0.15);z-index:20}
+.b .tray-item .tip{bottom:auto;top:calc(100% + 8px)}
+.tray-item:hover .tip{opacity:1;transform:translateY(0)}
 
 /* desktop window */
 .win{position:absolute;left:12%;top:20%;width:50%;height:46%;border-radius:8px;background:rgba(255,255,255,.9);box-shadow:0 12px 30px rgba(0,0,0,.3)}
@@ -84,29 +87,25 @@ h1{font-size:clamp(36px,6vw,76px);line-height:1.06;letter-spacing:-.04em;font-we
 .scr h3{position:absolute;right:6%;bottom:14%;color:#fff;font-size:clamp(18px,4.2vw,44px);font-weight:900;letter-spacing:-.03em}
 .b h3{bottom:auto;top:16%}
 .bl{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none;z-index:10}
-.screen.bk .bl{animation:bk .35s}
-@keyframes bk{0%,65%{opacity:1}100%{opacity:0}}
+.screen.bk .bl{animation:bk .45s}
+@keyframes bk{0%,60%{opacity:1}100%{opacity:0}}
 
-/* edge hover & fluid charge animation */
-.edge{position:absolute;top:0;bottom:0;width:12%;opacity:0;transition:opacity .25s;pointer-events:none;z-index:4;display:flex;align-items:center;justify-content:center}
-.edge.l{left:0;background:linear-gradient(90deg,rgba(255,255,255,.28),transparent)}
-.edge.r{right:0;background:linear-gradient(270deg,rgba(255,255,255,.28),transparent)}
-.edge span{position:absolute;left:0;right:0;bottom:0;height:0;background:linear-gradient(0deg,var(--a),rgba(56,189,248,.9));transition:height .35s linear}
-.edge.l span{background:linear-gradient(0deg,var(--b),rgba(251,191,36,.9))}
-.edge.arm span{height:100%}
+/* edge hover & 400ms charge progress */
+.edge{position:absolute;top:0;bottom:0;width:14%;opacity:0;transition:opacity .3s;pointer-events:none;z-index:4}
+.edge.l{left:0;background:linear-gradient(90deg,rgba(255,255,255,.24),transparent)}
+.edge.r{right:0;background:linear-gradient(270deg,rgba(255,255,255,.24),transparent)}
+.edge span{position:absolute;left:0;right:0;bottom:0;height:0;background:linear-gradient(0deg,var(--a),rgba(56,189,248,.85))}
+.edge.l span{background:linear-gradient(0deg,var(--b),rgba(251,191,36,.85))}
+.edge.arm span{height:100%;transition:height .4s linear}
 .stage.oink[data-on=A] .edge.r,.stage.oink[data-on=B] .edge.l{opacity:1}
 
-/* minimalist pulse arrow */
-.edge-badge{position:relative;z-index:2;display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:rgba(10,13,18,0.7);color:#fff;font:700 12px var(--sans);border:1px solid rgba(255,255,255,0.25);box-shadow:0 2px 8px rgba(0,0,0,.35);animation:pulse-edge 2s infinite ease-in-out}
-@keyframes pulse-edge{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
-
 /* cursor */
-.fc{position:absolute;left:30%;top:55%;width:20px;opacity:0;pointer-events:none;z-index:8;transition:left .7s cubic-bezier(.25,1,.5,1),top .7s cubic-bezier(.25,1,.5,1),opacity .2s;filter:drop-shadow(0 2px 4px rgba(0,0,0,.45))}
+.fc{position:absolute;left:30%;top:55%;width:20px;opacity:0;pointer-events:none;z-index:8;transition:left .9s cubic-bezier(.4,0,.2,1),top .9s cubic-bezier(.4,0,.2,1),opacity .2s;filter:drop-shadow(0 2px 4px rgba(0,0,0,.45))}
 .stand{width:20%;height:14px;margin:0 auto;background:#1d2024}
 .base{width:36%;height:6px;margin:0 auto;border-radius:6px;background:#2b2f35}
 
 /* sections */
-.sec{padding:80px 0 0}
+.sec{padding:92px 0 0}
 h2{font-size:clamp(28px,4.4vw,44px);letter-spacing:-.03em;line-height:1.2;font-weight:850}
 .lead{color:var(--mute);margin:10px 0 36px;max-width:34em}
 .tw{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--card)}
@@ -161,13 +160,13 @@ summary::-webkit-details-marker{display:none}
 summary::after{content:"+";font-weight:400;font-size:26px;line-height:1;transition:transform .2s}
 details[open] summary::after{transform:rotate(45deg)}
 details p{margin-top:10px;color:var(--mute)}
-footer{margin-top:100px;border-top:1px solid var(--line);padding:36px 0 calc(48px + env(safe-area-inset-bottom,0px));color:var(--mute);font-size:14px}
+footer{margin-top:110px;border-top:1px solid var(--line);padding:36px 0 calc(48px + env(safe-area-inset-bottom,0px));color:var(--mute);font-size:14px}
 footer .w{display:flex;flex-wrap:wrap;gap:12px 28px;justify-content:space-between;align-items:center}
 footer a{text-decoration:underline;text-underline-offset:3px}
 @media (max-width:860px){
 .links{display:none}nav .w{justify-content:space-between}
 .hero{grid-template-columns:1fr;padding-top:40px;gap:20px}
-.stage{grid-template-areas:"a b" "m m";grid-template-columns:1fr 1fr;gap:16px;margin:24px 0 28px}
+.stage{grid-template-areas:"a b" "m m";grid-template-columns:1fr 1fr;gap:16px;margin-top:24px}
 .host{width:auto}.cab{display:none}
 .t,.t.w4,.t.w2{grid-column:span 6}
 .steps>li{grid-template-columns:1fr}.steps>li::before{font-size:40px}
@@ -216,6 +215,7 @@ footer a{text-decoration:underline;text-underline-offset:3px}
             <div class="tb-tray">
               <div class="tray-item" id="trayWin">
                 <svg><use href="#lg"/></svg>
+                <div class="tip">OneScreen · 双击切到主机 B</div>
               </div>
               <span class="tb-time">10:42</span>
             </div>
@@ -229,6 +229,7 @@ footer a{text-decoration:underline;text-underline-offset:3px}
             <div class="tb-tray">
               <div class="tray-item" id="trayMac">
                 <svg><use href="#lg"/></svg>
+                <div class="tip">OneScreen · 双击切到主机 A</div>
               </div>
               <span class="tb-time">10:42</span>
             </div>
@@ -237,9 +238,9 @@ footer a{text-decoration:underline;text-underline-offset:3px}
           <h3>macOS</h3>
         </div>
 
-        <!-- Minimal Edge Charge Indicators -->
-        <div class="edge l"><span></span><div class="edge-badge">◀</div></div>
-        <div class="edge r"><span></span><div class="edge-badge">➔</div></div>
+        <!-- Edges with 400ms Charge Bar -->
+        <div class="edge l"><span></span></div>
+        <div class="edge r"><span></span></div>
 
         <!-- Virtual Cursor -->
         <svg class="fc" id="fc" viewBox="0 0 20 24"><path d="M2 2l15 9-6.5 1.5L7 19z" fill="#fff" stroke="#000" stroke-width="1.5" stroke-linejoin="round"/></svg>
@@ -311,14 +312,14 @@ footer a{text-decoration:underline;text-underline-offset:3px}
 const $=s=>document.querySelector(s),st=$('#stage'),sc=$('#screen'),fc=$('#fc');
 const N={A:'主机 A · HDMI 1',B:'主机 B · DP 1'},sleep=ms=>new Promise(r=>setTimeout(r,ms));
 let cur='A',cool=false,t=null,lt=0;
-let isAuto=true,loopSeq=0;
+let isAuto=true,loopSeq=0,isHovering=false;
 
 function clr(){clearTimeout(t);t=null;document.querySelectorAll('.edge').forEach(e=>e.classList.remove('arm'))}
 
-function sw(to,why,force){
+function sw(to,force){
   if(!force&&cool)return false;
   if(to===cur)return false;
-  cool=true;setTimeout(()=>cool=false,700);
+  cool=true;setTimeout(()=>cool=false,1000);
   cur=to;st.dataset.on=to;
   sc.classList.remove('bk');void sc.offsetWidth;sc.classList.add('bk');
   return true;
@@ -329,8 +330,7 @@ const other=()=>cur==='A'?'B':'A';
 function bindTray(el,targetHost){
   if(!el)return;
   const doSwitch=()=>{
-    isAuto=false;
-    sw(targetHost,'双击虚拟托盘');
+    sw(targetHost);
   };
   el.addEventListener('dblclick',e=>{e.stopPropagation();doSwitch()});
   el.addEventListener('click',e=>{
@@ -342,8 +342,9 @@ function bindTray(el,targetHost){
 bindTray($('#trayWin'),'B');
 bindTray($('#trayMac'),'A');
 
-/* User real mouse manual interaction: mouse in = manual, mouse out = auto */
+/* User real mouse manual interaction: In = manual, Out = auto */
 sc.addEventListener('pointerenter',()=>{
+  isHovering=true;
   isAuto=false;
   fc.style.opacity=0;
   clr();
@@ -355,16 +356,21 @@ sc.addEventListener('pointermove',e=>{
   const side=cur==='A'?'r':'l',hit=cur==='A'?x>.88:x<.12;
   if(hit&&!t){
     $('.edge.'+side).classList.add('arm');
-    t=setTimeout(()=>{clr();sw(other(),'手动切屏')},350);
+    t=setTimeout(()=>{clr();sw(other())},400);
   }else if(!hit&&t){
     clr();
   }
 });
 
 sc.addEventListener('pointerleave',()=>{
+  isHovering=false;
   clr();
-  isAuto=true;
-  runAutoLoop();
+  setTimeout(()=>{
+    if(!isHovering&&!isAuto){
+      isAuto=true;
+      runAutoLoop();
+    }
+  },400);
 });
 
 /* hotkey */
@@ -372,57 +378,67 @@ const ks=[...document.querySelectorAll('.keys kbd')];
 const idx=e=>e.key==='Control'?0:e.key==='Alt'?1:e.key==='Shift'?2:e.code==='KeyS'?3:-1;
 addEventListener('keydown',e=>{
   const i=idx(e);if(i>-1)ks[i].classList.add('on');
-  if(e.ctrlKey&&e.altKey&&e.shiftKey&&e.code==='KeyS'){e.preventDefault();sw('A','强制切回热键',true)||0}
+  if(e.ctrlKey&&e.altKey&&e.shiftKey&&e.code==='KeyS'){e.preventDefault();sw('A',true)||0}
 });
 addEventListener('keyup',e=>{const i=idx(e);if(i>-1)ks[i].classList.remove('on')});
 addEventListener('blur',()=>ks.forEach(k=>k.classList.remove('on')));
 $('#keys').addEventListener('click',()=>{
   ks.forEach(k=>k.classList.add('on'));setTimeout(()=>ks.forEach(k=>k.classList.remove('on')),250);
-  sw('A','强制切回热键',true);
+  sw('A',true);
 });
 
-/* Continuous cinematic auto-pilot loop (~3 seconds complete round-trip) */
+/* Snappy, continuous cinematic auto-pilot loop */
 async function runAutoLoop(){
   const mySeq=++loopSeq;
   if(matchMedia('(prefers-reduced-motion:reduce)').matches){isAuto=false;return}
 
   while(isAuto&&mySeq===loopSeq){
     if(cur==='A'){
-      // 1. Cursor glides to right edge smoothly (0.7s)
+      // Glide to right edge
       fc.style.opacity=1;
-      fc.style.transition='left .7s cubic-bezier(.25,1,.5,1), top .7s cubic-bezier(.25,1,.5,1), opacity .2s';
-      fc.style.left='95%';fc.style.top='50%';
-      await sleep(700);if(!isAuto||mySeq!==loopSeq||cur!=='A')break;
+      fc.style.transition='left .9s cubic-bezier(.4,0,.2,1), top .9s cubic-bezier(.4,0,.2,1), opacity .2s';
+      fc.style.left='45%';fc.style.top='54%';
+      await sleep(650);if(!isAuto||mySeq!==loopSeq||cur!=='A')break;
 
-      // 2. Immediate responsive flash on arrival, no idle hang
+      fc.style.left='94%';fc.style.top='50%';
+      await sleep(900);if(!isAuto||mySeq!==loopSeq||cur!=='A')break;
+
+      // Charge 400ms at edge
       $('.edge.r').classList.add('arm');
-      await sleep(100);clr();if(!isAuto||mySeq!==loopSeq||cur!=='A')break;
+      await sleep(400);clr();if(!isAuto||mySeq!==loopSeq||cur!=='A')break;
 
-      // 3. Switch to Host B
-      sw('B','自动切屏');
-      fc.style.transition='none';fc.style.left='6%';fc.style.top='50%';
+      // Switch to B
+      sw('B');
+      fc.style.transition='none';fc.style.left='5%';fc.style.top='50%';
       void fc.offsetWidth;
+      fc.style.transition='left .9s cubic-bezier(.4,0,.2,1), top .9s cubic-bezier(.4,0,.2,1), opacity .2s';
 
-      // 4. Sits on Host B (0.85s)
-      await sleep(850);if(!isAuto||mySeq!==loopSeq||cur!=='B')break;
+      await sleep(50);if(!isAuto||mySeq!==loopSeq)break;
+      fc.style.left='45%';fc.style.top='48%';
+      await sleep(750);if(!isAuto||mySeq!==loopSeq)break;
     }else{
-      // 5. Cursor glides to left edge smoothly (0.7s)
+      // Glide to left edge
       fc.style.opacity=1;
-      fc.style.transition='left .7s cubic-bezier(.25,1,.5,1), top .7s cubic-bezier(.25,1,.5,1), opacity .2s';
-      fc.style.left='4%';fc.style.top='50%';
-      await sleep(700);if(!isAuto||mySeq!==loopSeq||cur!=='B')break;
+      fc.style.transition='left .9s cubic-bezier(.4,0,.2,1), top .9s cubic-bezier(.4,0,.2,1), opacity .2s';
+      fc.style.left='45%';fc.style.top='48%';
+      await sleep(650);if(!isAuto||mySeq!==loopSeq||cur!=='B')break;
 
-      // 6. Immediate responsive flash on arrival, no idle hang
+      fc.style.left='5%';fc.style.top='50%';
+      await sleep(900);if(!isAuto||mySeq!==loopSeq||cur!=='B')break;
+
+      // Charge 400ms at edge
       $('.edge.l').classList.add('arm');
-      await sleep(100);clr();if(!isAuto||mySeq!==loopSeq||cur!=='B')break;
+      await sleep(400);clr();if(!isAuto||mySeq!==loopSeq||cur!=='B')break;
 
-      // 7. Switch to Host A
-      sw('A','自动切屏');
+      // Switch to A
+      sw('A');
       fc.style.transition='none';fc.style.left='94%';fc.style.top='50%';
       void fc.offsetWidth;
+      fc.style.transition='left .9s cubic-bezier(.4,0,.2,1), top .9s cubic-bezier(.4,0,.2,1), opacity .2s';
 
-      // 8. Sits on Host A (0.85s)
-      await sleep(850);if(!isAuto||mySeq!==loopSeq||cur!=='A')break;
+      await sleep(50);if(!isAuto||mySeq!==loopSeq)break;
+      fc.style.left='45%';fc.style.top='54%';
+      await sleep(750);if(!isAuto||mySeq!==loopSeq)break;
     }
   }
 }
