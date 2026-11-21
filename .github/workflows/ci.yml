@@ -41,7 +41,9 @@ jobs:
           echo "Checking Windows amd64..."
           GOOS=windows GOARCH=amd64 go build -o /dev/null .
           echo "Checking Darwin packages..."
-          GOOS=darwin GOARCH=arm64 go test ./internal/oink ./internal/ddc
+          GOOS=darwin GOARCH=arm64 go build ./internal/...
+          GOOS=darwin GOARCH=amd64 go build ./internal/...
+          GOOS=darwin GOARCH=arm64 go test -c -o /dev/null ./internal/oink ./internal/ddc
 
   detect-version:
     name: Check Version Bump
@@ -83,6 +85,8 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Push Tag
         run: |
@@ -94,8 +98,8 @@ jobs:
 
   build-release:
     name: Build Release Binaries
-    needs: [detect-version, create-tag]
-    if: always() && (needs.detect-version.outputs.is_new == 'true' || startsWith(github.ref, 'refs/tags/v'))
+    needs: [test, detect-version, create-tag]
+    if: always() && needs.test.result == 'success' && (needs.detect-version.outputs.is_new == 'true' || startsWith(github.ref, 'refs/tags/v'))
     strategy:
       matrix:
         include:
@@ -139,7 +143,7 @@ jobs:
           $env:GOOS = "${{ matrix.goos }}"
           $env:GOARCH = "${{ matrix.goarch }}"
           go build -ldflags "-H windowsgui -s -w" -o "${{ matrix.artifact_name }}" .
-          if (Test-Path "../../tools") { Move-Item "${{ matrix.artifact_name }}" ../../ -Force }
+          if (Test-Path "../../tools") { Copy-Item "${{ matrix.artifact_name }}" ../../ -Force }
 
       - name: Build Unix Binary
         if: matrix.goos != 'windows'
@@ -148,18 +152,20 @@ jobs:
           export GOOS="${{ matrix.goos }}"
           export GOARCH="${{ matrix.goarch }}"
           go build -ldflags "-s -w" -o "${{ matrix.artifact_name }}" .
-          if [ -d "../../tools" ]; then mv "${{ matrix.artifact_name }}" ../../; fi
+          if [ -d "../../tools" ]; then cp "${{ matrix.artifact_name }}" ../../; fi
 
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
-          path: ${{ matrix.artifact_name }}
+          path: |
+            ${{ matrix.artifact_name }}
+            tools/onescreen/${{ matrix.artifact_name }}
 
   publish-release:
     name: Publish GitHub Release
     needs: [detect-version, build-release]
-    if: always() && (needs.detect-version.outputs.is_new == 'true' || startsWith(github.ref, 'refs/tags/v'))
+    if: always() && needs.build-release.result == 'success' && (needs.detect-version.outputs.is_new == 'true' || startsWith(github.ref, 'refs/tags/v'))
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
